@@ -23,22 +23,18 @@ def initalize( sim_name="warp", sim_comment="No Simulation Comment", sim_path = 
        return : string indicating the path to the sim2 file created by libsim    
     """
     #Return parameter
-    print "T1"
     simFileName = None
     #Set the VisIt home directory
     VisItSetDirectory( visit_info.visitdir )
     options = "-debug 5"
     VisItSetOptions(options);
-    print "T2"
     #Create the trace file
     deleteTraceFile = False
     if visitTraceFile is  None :
         deleteTraceFile = True
         visitTraceFile = tempfile.mkstemp()[1]
-    print "T3"
     VisItOpenTraceFile(visitTraceFile)
     #Setyp the visit environment
-    print "T4"
     VisItSetupEnvironment()
     #Initalize broadcast function for parallel execution
     if parallel.lparallel :
@@ -46,23 +42,16 @@ def initalize( sim_name="warp", sim_comment="No Simulation Comment", sim_path = 
         VisItSetBroadcastStringFunction( broadcast_string )
         VisItSetParallel( parallel.lparallel)
         VisItSetParallelRank( parallel.get_rank() )
-    print "T4"
-    #Initalize the visit libsim engine	
+    #Initalize the visit libsim engine
     if parallel.get_rank() == 0 :
-        print "T5.1"
         resp = VisItInitializeSocketAndDumpSimFile( sim_name , sim_comment , sim_path , None, None , None )
-        print "T5.2"
         #If VisIt libsim was started correctly
         if resp == 1 :
-            print "T5.2.1"
             simFileName = _get_simfilename_from_trace( visitTraceFile )
-        print "T5.3"
-    print "T6"
     #Close and remove the trace file
     if deleteTraceFile : 
         VisItCloseTraceFile()
         os.remove( visitTraceFile )
-    print "T7"
     return simFileName
 
 def finalize() :
@@ -147,7 +136,7 @@ def broadcast_string(sval, slen, sender=0) :
     """String broadcast callback for libsim"""
     ret = None
     if parallel.lparallel :
-        if paralle.get_rank() == sender :
+        if parallel.get_rank() == sender :
             ret = mpicom.broadcast(ival)
         else : 
             ret = mpicom.broadcast()
