@@ -1,0 +1,15 @@
+#PBS -q debug
+#PBS -l mppwidth=4
+#PBS -l walltime=00:10:00
+#PBS -V
+
+cd $PBS_O_WORKDIR
+setenv CRAY_ROOTFS DSL
+module load PrgEnv-gnu
+module load visit
+setenv LD_LIBRARY_PATH /usr/common/graphics/visit/current/linux-x86_64/lib:${LD_LIBRARY_PATH}
+setenv VISITPLUGINDIR /usr/common/graphics/visit/current/linux-x86_64/plugins
+setenv VISIT_MESA_LIB /usr/common/graphics/visit/current/linux-x86_64/lib/libOSMesa.so
+
+aprun -n 4 -N 4 ~grote/hopper/public/python/bin/pyMPI warp_visit.py
+
