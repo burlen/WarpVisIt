@@ -1,8 +1,11 @@
 from visit import *
 DeleteAllPlots()
+ResetView()
 
 wat = GetSaveWindowAttributes()
-wat.fileName = 'cigar-vz-of-b-v-'
+wat.fileName = 'binning-bv'
+wat.width = 1024
+wat.height = 768
 SetSaveWindowAttributes(wat)
 
 AddPlot("Pseudocolor", "particle/vz", 1, 1)
@@ -29,12 +32,34 @@ DataBinningAtts.dim3MinRange = 0
 DataBinningAtts.dim3MaxRange = 1
 DataBinningAtts.dim3NumBins = 50
 DataBinningAtts.outOfBoundsBehavior = DataBinningAtts.Clamp  # Clamp, Discard
-DataBinningAtts.reductionOperator = DataBinningAtts.Average  # Average, Minimum, Maximum, StandardDeviation, Variance, Sum, Count, RMS, PDF
+DataBinningAtts.reductionOperator = DataBinningAtts.Count  # Average, Minimum, Maximum, StandardDeviation, Variance, Sum, Count, RMS, PDF
 DataBinningAtts.varForReduction = "particle/vz"
 DataBinningAtts.emptyVal = float('NaN')
 DataBinningAtts.outputType = DataBinningAtts.OutputOnBins  # OutputOnBins, OutputOnInputMesh
 DataBinningAtts.removeEmptyValFromCurve = 1
 SetOperatorOptions(DataBinningAtts, 1)
 
+
+aat = AnnotationAttributes()
+aat.userInfoFlag = 0
+aat.databaseInfoFlag = 0
+aat.timeInfoFlag = 0
+SetAnnotationAttributes(aat)
+
+plotName = GetPlotList().GetPlots(0).plotName
+legend = GetAnnotationObject(plotName)
+legend.orientation = legend.VerticalLeft  # VerticalRight, VerticalLeft, HorizontalTop, Horiz
+legend.fontBold = 1
+
+banner = CreateAnnotationObject("Text2D")
+banner.text = "number of v vs. b  t=$time"
+banner.position = (0.2, 0.93)
+banner.fontBold = 1
+banner.height = 0.02
+
 DrawPlots()
 SaveWindow()
+
+banner.Delete()
+DeleteAllPlots()
+ResetView()

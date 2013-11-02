@@ -42,8 +42,7 @@ def main(warpScriptFileName='', simFileName='', scriptRoot='',
 
     # the engine now runs until either the desired number of
     # steps is reached, or the cli tells him to stop.
-    while engine.EventLoop():
-        pass
+    engine.EventLoop()
 
     # shut the engine and cli down
     engine.Finalize()

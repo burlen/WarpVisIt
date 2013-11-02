@@ -15,9 +15,11 @@ def LoadRenderScripts(scriptRoot):
     # script names (keys) are used by the Render funciton
     # to select the desired script
     renderingScripts = {
-        'RhoV':'cigar-render-part-and-field.py',
-        'V(x,y)':'cigar-render-v-of-x-y.py',
-        'V_z(B,V)':'cigar-render-vz-of-b-v.py'
+        'max(v(x,y))' : 'render-max-v.py',
+        'binning bv'  : 'render-binning-bv.py',
+        'scatter bv'  : 'render-scatter-bv.py',
+        'volume phi'  : 'render-volume-phi.py',
+        'particle v'  : 'render-particle-v.py',
         }
 
     for key,fileName in renderingScripts.iteritems():
@@ -37,21 +39,29 @@ def GetActiveRenderScripts():
     list is empty then nothing will be rendered this time step.
     The script dictionary is created by LoadRenderScripts.
     """
+    scripts = []
 
     # some very contrived examples
     # this just shows the flexibility
     # the point is rendering can be triggered for
     # any plot under any condition
-    scripts = []
 
     # after M iterations every N iterations plot...
-    if (warp.top.it >= 10) and ((warp.top.it % 8) == 0):
-        scripts.append('RhoV')
+    #if (warp.top.it >= 10) and ((warp.top.it % 8) == 0):
+    #    scripts.append('particle v')
+    #    scripts.append('volume phi')
 
-    # every R steps plot histograms
-    if ((warp.top.it % 5) == 0):
-        scripts.append('V(x,y)')
-        scripts.append('V_z(B,V)')
+    # every N interations plot ...
+    #if ((warp.top.it % 5) == 0):
+    #    scripts.append('max(v(x,y))')
+    #    scripts.append('num b vs. v')
+
+    # always plot
+    scripts.append('scatter bv')
+    scripts.append('binning bv')
+    scripts.append('particle v')
+    scripts.append('volume phi')
+    scripts.append('max(v(x,y))')
 
     return scripts
 
@@ -65,8 +75,8 @@ def Continue():
     """
     Return false when the simulation should no longer run.
     """
-    # take as many steps as you need
-    return warp.top.it <= 100
+    # adjust this to take as many steps as you need
+    return warp.top.it <= 4
 
 
 #-----------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import os
+import sys
 import simV2
 import WarpVisItSimV2Db
 from WarpVisItUtil import pError
@@ -6,7 +7,6 @@ from WarpVisItUtil import pDebug
 from WarpVisItUtil import VisItEnv
 from WarpVisItCLI import WarpVisItCLI
 import parallel
-import warp
 
 #-----------------------------------------------------------------------------
 def broadcastInt(val, sender=0) :
@@ -66,8 +66,10 @@ def commandCallback(cmd, args, userData):
         return True
 
     elif cmd == "end":
-        userData.Abort()
-        return True
+        #userData.Abort()
+        pDebug('quitting')
+        sys.exit(0)
+        return False
 
     pError('Unrecgnozied command %s'%(cmd))
     return False
@@ -112,6 +114,7 @@ class WarpVisItEngine:
         self.__VisItControl = True
         self.__VisItAbort = False
         self.__Interactive = True
+        self.__InteractiveRenderScripts = False
 
         simV2.VisItSetDirectory(self.__Env.GetRoot())
         simV2.VisItSetupEnvironment()
@@ -409,6 +412,15 @@ class WarpVisItEngine:
                      "visit.SendSimulationCommand('localhost', '%s', 'step')\n")%(
                     self.__SimFile))
             return True
+        else:
+            if not self.__Interactive:
+                # simulation is over, tell the viewer to tell us
+                # to stop
+                simV2.VisItExecuteCommand(
+                    ("from visit import visit\n"
+                     "visit.SendSimulationCommand('localhost', '%s', 'end')\n")%(
+                    self.__SimFile))
+
         return False
 
     #-------------------------------------------------------------------------
@@ -417,6 +429,11 @@ class WarpVisItEngine:
         pDebug('WarpVisItEngine::Render')
 
         if self.__Interactive:
+
+            if self.__InteractiveRenderScripts:
+                pDebug('Rendering %s'%(script))
+                simV2.VisItExecuteCommand(self.__RenderScripts[script])
+
             if self.__VisItUpdates:
                 simV2.VisItUpdatePlots()
 

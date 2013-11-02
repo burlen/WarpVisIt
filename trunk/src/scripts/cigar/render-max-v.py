@@ -1,13 +1,16 @@
 from visit import *
 DeleteAllPlots()
+ResetView()
 
 wat = GetSaveWindowAttributes()
-wat.fileName = 'cigar-v-of-x-y-'
+wat.fileName = 'binning-maxv'
+wat.width = 1024
+wat.height = 768
 SetSaveWindowAttributes(wat)
 
 AddPlot("Pseudocolor", "particle/V", 1, 1)
-DrawPlots()
 SetActivePlots(0)
+
 AddOperator("DataBinning", 1)
 DataBinningAtts = DataBinningAttributes()
 DataBinningAtts.numDimensions = DataBinningAtts.Two  # One, Two, Three
@@ -37,5 +40,26 @@ DataBinningAtts.outputType = DataBinningAtts.OutputOnBins  # OutputOnBins, Outpu
 DataBinningAtts.removeEmptyValFromCurve = 1
 SetOperatorOptions(DataBinningAtts, 1)
 
+aat = AnnotationAttributes()
+aat.userInfoFlag = 0
+aat.databaseInfoFlag = 0
+aat.timeInfoFlag = 0
+SetAnnotationAttributes(aat)
+
+plotName = GetPlotList().GetPlots(0).plotName
+legend = GetAnnotationObject(plotName)
+legend.orientation = legend.VerticalLeft  # VerticalRight, VerticalLeft, HorizontalTop, Horiz
+legend.fontBold = 1
+
+banner = CreateAnnotationObject("Text2D")
+banner.text = "max(V(x,y))  t=$time"
+banner.position = (0.2, 0.93)
+banner.fontBold = 1
+banner.height = 0.02
+
 DrawPlots()
 SaveWindow()
+
+banner.Delete()
+DeleteAllPlots()
+ResetView()
