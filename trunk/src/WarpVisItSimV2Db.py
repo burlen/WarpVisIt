@@ -5,6 +5,12 @@ import simV2
 from WarpVisItUtil import pError
 from WarpVisItUtil import pDebug
 
+# VisIt has a nice feature that if you use
+# / in a variable name you can construct nested
+# menus and organize variables by mesh. However
+# this breaks the data binning operator.
+varsep = '/'
+
 #-----------------------------------------------------------------------------
 def getTime():
     """Return current simulation time"""
@@ -115,7 +121,7 @@ def getMetaData(userData):
         if not valid(vmd):
             pError('VisIt_VariableMetaData_alloc failed')
             return None
-        varname = 'particle/%s'%(var)
+        varname = 'particle%s%s'%(varsep,var)
         simV2.VisIt_VariableMetaData_setName(vmd, varname)
         simV2.VisIt_VariableMetaData_setMeshName(vmd, 'particle')
         simV2.VisIt_VariableMetaData_setType(vmd, simV2.VISIT_VARTYPE_SCALAR)
@@ -130,7 +136,7 @@ def getMetaData(userData):
         if not valid(vmd):
             pError('VisIt_VariableMetaData_alloc failed')
             return None
-        varname = 'grid/%s'%(var)
+        varname = 'grid%s%s'%(varsep,var)
         simV2.VisIt_VariableMetaData_setName(vmd, varname)
         simV2.VisIt_VariableMetaData_setMeshName(vmd, 'grid')
         simV2.VisIt_VariableMetaData_setType(vmd, simV2.VISIT_VARTYPE_SCALAR)
@@ -142,7 +148,9 @@ def getMetaData(userData):
     expstr = lambda x : x[1]
     exptype = lambda x : x[2]
     for exp in [('{0}/v','{{<{0}/vx>, <{0}/vy>, <{0}/vz>}}',simV2.VISIT_VARTYPE_VECTOR),
-          ('{0}/V','sqrt(<{0}/vx>*<{0}/vx>+<{0}/vy>*<{0}/vy>+<{0}/vz>*<{0}/vz>)',simV2.VISIT_VARTYPE_SCALAR)]:
+          ('{0}/V','sqrt(<{0}/vx>*<{0}/vx>+<{0}/vy>*<{0}/vy>+<{0}/vz>*<{0}/vz>)',simV2.VISIT_VARTYPE_SCALAR),
+          ('{0}/B','sqrt(<{0}/bx>*<{0}/bx>+<{0}/by>*<{0}/by>+<{0}/bz>*<{0}/bz>)',simV2.VISIT_VARTYPE_SCALAR),
+          ('{0}/E','sqrt(<{0}/ex>*<{0}/ex>+<{0}/ey>*<{0}/ey>+<{0}/ez>*<{0}/ez>)',simV2.VISIT_VARTYPE_SCALAR) ]:
 #          ('const','coord(csg)[0]*0',simV2.VISIT_VARTYPE_SCALAR)]:
 #          ('particle proc id','procid(particles)',simV2.VISIT_VARTYPE_SCALAR),
 #          ('field proc id','procid(fields)',simV2.VISIT_VARTYPE_SCALAR)]:
@@ -331,7 +339,7 @@ def getVar(domain, varid, userData):
     # getMesh/getVar on those processes that do not
     pDebug('getVar %i %s'%(domain, varid))
 
-    tok = varid.split('/')
+    tok = varid.split(varsep)
     meshname = tok[0]
     varname = tok[1]
 
@@ -426,9 +434,8 @@ def getVar(domain, varid, userData):
                     return None
                 simV2.VisIt_VariableData_setDataD(vd, simV2.VISIT_OWNER_SIM, 1, n, rank)
                 return vd
-    
-    
-    
+
+
         # grided data
         elif meshname == 'grid':
             # ax

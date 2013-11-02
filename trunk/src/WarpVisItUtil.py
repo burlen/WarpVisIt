@@ -8,12 +8,14 @@ def pDebug(msg):
     Print an debug message to stderr (if the following line is not commented)
     """
     #sys.stderr.write('=====: %d %s\n'%(parallel.get_rank(), msg))
+    #sys.stderr.flush()
     pass
 
 #-----------------------------------------------------------------------------
 def pError(msg):
     """print an error message to stderr"""
     sys.stderr.write('Error: %d %s\n'%(parallel.get_rank(), msg))
+    sys.stderr.flush()
 
 #-----------------------------------------------------------------------------
 class VisItEnv:

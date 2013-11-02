@@ -1,8 +1,6 @@
 #!/bin/bash
-
 NUM_PROCS=1
 MPI_EXEC=mpiexec
-
 # get the command line arguments
 for i in "$@"
 do
@@ -17,14 +15,14 @@ do
             ;;
 
         --warp-script=*)
-            WARP_SCRIPT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
-            if [ ! -e "$WARP_SCRIPT" ]
+            WARPVISIT_WARP_SCRIPT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+            if [ ! -e "$WARPVISIT_WARP_SCRIPT" ]
             then
                 echo "ERROR: $i not found."
                 exit
             else
-                export WARP_SCRIPT
-                echo "WARP_SCRIPT=$WARP_SCRIPT"
+                export WARPVISIT_WARP_SCRIPT
+                echo "WARPVISIT_WARP_SCRIPT=$WARPVISIT_WARP_SCRIPT"
             fi
             ;;
 
@@ -37,22 +35,27 @@ do
             fi
             ;;
 
-        --visit-script=*)
-            VISIT_SCRIPT=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
-            if [ ! -e "$VISIT_SCRIPT" ]
+        --interactive)
+            echo "WARPVISIT_INTERACTIVE=1"
+            export WARPVISIT_INTERACTIVE=1
+            ;;
+
+        --script-dir=*)
+            WARPVISIT_SCRIPT_DIR=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+            if [ ! -e "$WARPVISIT_SCRIPT_DIR" ]
             then
                 echo "ERROR: $i not found."
                 exit
             else
-                export VISIT_SCRIPT
+                export WARPVISIT_SCRIPT_DIR
                 echo "VISIT_SCRIPT=$VISIT_SCRIPT"
             fi
             ;;
 
         --sim2-file=*)
-            SIM2_FILE=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
-            export SIM2_FILE
-            echo "SIM2_FILE=$SIM2_FILE"
+            WARPVISIT_SIM2_FILE=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+            export WARPVISIT_SIM2_FILE
+            echo "WARPVISIT_SIM2_FILE=$WARPVISIT_SIM2_FILE"
             ;;
 
         --help)
@@ -63,7 +66,7 @@ do
             echo "    --warp-script   : Warp python code to configure the run"
             echo "    --visit-install : path to the VisIt install directory"
             echo "    --sim2-file     : where the run should place the sim2 file (optional)"
-            echo "    --visit-script  : VisIt python code to configure VisIt's rendering pipeline (optional)"
+            echo "    --script-dir    : where to find user supplied scripts (optional)"
             echo
             exit
             ;;
@@ -77,7 +80,8 @@ do
     esac
 done
 
-if [[ -z "$WARP_SCRIPT" ]]
+# validate and set defaults
+if [[ -z "$WARPVISIT_WARP_SCRIPT" ]]
 then
     echo
     echo "ERROR: --warp-script=... is a manditory argument."
@@ -88,8 +92,12 @@ fi
 
 if [[ -n "$VISIT_INSTALL" ]]
 then
-    # get VisIt's environment
     source WarpVisItEnv.sh $VISIT_INSTALL
+fi
+
+if [[ -z "$WARPVISIT_SCRIPT_DIR" ]]
+then
+    export WARPVISIT_SCRIPT_DIR=`pwd`
 fi
 
 # start the run

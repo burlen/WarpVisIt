@@ -1,26 +1,85 @@
 from warp import *
 from extpart import *
+import os
 
-def UpdatePlots():
+#-----------------------------------------------------------------------------
+def LoadRenderScripts(scriptRoot):
     """
-    Return true if the current time step should be visualized.
+    This function returns a dictionary of rendering scripts
+    whose key is a descriptive string. This dictionary will
+    be used when our Render function returns a list of scripts
+    to run. the scriptRoot argument gives the path where scripts
+    are stored.
     """
-    # this saves an image every ten steps
-    return (int(warp.top.it) % int(10)) == int(0)
+    # user supplied rendering scripts
+    # script names (keys) are used by the Render funciton
+    # to select the desired script
+    renderingScripts = {
+        'RhoV':'cigar-render-part-and-field.py',
+        'V(x,y)':'cigar-render-v-of-x-y.py',
+        'V_z(B,V)':'cigar-render-vz-of-b-v.py'
+        }
 
-def Finished():
-    """
-    Return true when the simulation should no longer run
-    """
-    return warp.top.it >= 100
+    for key,fileName in renderingScripts.iteritems():
+        f = open(os.path.join(scriptRoot,fileName))
+        code = f.read()
+        f.close()
+        renderingScripts[key] = code
 
+    return renderingScripts
+
+
+#-----------------------------------------------------------------------------
+def GetActiveRenderScripts():
+    """
+    If the current time step should be visualized return a list
+    of keys naming which rendering scripts should run. If the
+    list is empty then nothing will be rendered this time step.
+    The script dictionary is created by LoadRenderScripts.
+    """
+
+    # some very contrived examples
+    # this just shows the flexibility
+    # the point is rendering can be triggered for
+    # any plot under any condition
+    scripts = []
+
+    # after M iterations every N iterations plot...
+    if (warp.top.it >= 10) and ((warp.top.it % 8) == 0):
+        scripts.append('RhoV')
+
+    # every R steps plot histograms
+    if ((warp.top.it % 5) == 0):
+        scripts.append('V(x,y)')
+        scripts.append('V_z(B,V)')
+
+    return scripts
+
+#-----------------------------------------------------------------------------
+def Advance():
+    """Advance the simulation one time step."""
+    warp.step()
+
+#-----------------------------------------------------------------------------
+def Continue():
+    """
+    Return false when the simulation should no longer run.
+    """
+    # take as many steps as you need
+    return warp.top.it <= 100
+
+
+#-----------------------------------------------------------------------------
+def Finalize():
+    """
+    shutdown the simulation, cleanup etc.
+    """
+    pass
+
+#-----------------------------------------------------------------------------
 def Initialize():
     """
-    Example of a how an in-situ run is configured.
-    This funcion must be named Configure. It is
-    passed to the in-situ driver via environment
-    variable name WarpConfigFile set with the path
-    to this file.
+    Setup IC and start the simulation, but don't run it yet.
     """
     # --- Set four-character run id, comment lines, user's name.
     top.pline2   = "Example 3D beam in a FODO lattice"
