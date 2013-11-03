@@ -56,12 +56,12 @@ def GetActiveRenderScripts():
     #    scripts.append('max(v(x,y))')
     #    scripts.append('num b vs. v')
 
-    # always plot
-    scripts.append('scatter bv')
-    scripts.append('binning bv')
-    scripts.append('particle v')
-    scripts.append('volume phi')
-    scripts.append('max(v(x,y))')
+
+    if ((warp.top.it % 50) == 0):
+        scripts.append('scatter bv')
+        scripts.append('particle v')
+        scripts.append('volume phi')
+        scripts.append('max(v(x,y))')
 
     return scripts
 
@@ -76,7 +76,7 @@ def Continue():
     Return false when the simulation should no longer run.
     """
     # adjust this to take as many steps as you need
-    return warp.top.it <= 4
+    return warp.top.it <= 500
 
 
 #-----------------------------------------------------------------------------

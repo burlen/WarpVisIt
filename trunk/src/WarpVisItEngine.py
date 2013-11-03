@@ -431,8 +431,9 @@ class WarpVisItEngine:
         if self.__Interactive:
 
             if self.__InteractiveRenderScripts:
-                pDebug('Rendering %s'%(script))
-                simV2.VisItExecuteCommand(self.__RenderScripts[script])
+                for script in self.__ActiveRenderScriptsCallback():
+                    pDebug('Rendering %s'%(script))
+                    simV2.VisItExecuteCommand(self.__RenderScripts[script])
 
             if self.__VisItUpdates:
                 simV2.VisItUpdatePlots()
