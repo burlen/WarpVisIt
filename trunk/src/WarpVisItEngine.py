@@ -43,29 +43,29 @@ def commandCallback(cmd, args, userData):
     control commands issues by the VisIt viewer.
     """
     pDebug('commandCallback %s'%(cmd))
-    if cmd == "halt":
+    if cmd == 'pause':
         userData.SetVisItControl(True)
         userData.SetVisItUpdates(True)
         simV2.VisItUpdatePlots()
         return True
 
-    elif cmd == "step":
+    elif cmd == 'step':
         userData.SetVisItControl(True)
         userData.SetVisItUpdates(True)
         cont = userData.Update()
         return cont
 
-    elif cmd == "run":
+    elif cmd == 'run':
         userData.SetVisItControl(False)
         userData.SetVisItUpdates(True)
         return True
 
-    elif cmd == "run_without_update":
+    elif cmd == 'run (no vis)':
         userData.SetVisItControl(False)
         userData.SetVisItUpdates(False)
         return True
 
-    elif cmd == "end":
+    elif cmd == 'kill':
         #userData.Abort()
         pDebug('quitting')
         sys.exit(0)

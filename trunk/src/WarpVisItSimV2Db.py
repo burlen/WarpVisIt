@@ -165,7 +165,7 @@ def getMetaData(userData):
         simV2.VisIt_SimulationMetaData_addExpression(simmd, expmd)
 
     # commands
-    for cmd in ['halt', 'step', 'run', 'run_without_update', 'end']:
+    for cmd in ['step', 'run', 'pause', 'kill']:
         cmdmd = simV2.VisIt_CommandMetaData_alloc()
         if not valid(cmdmd):
             pError('VisIt_CommandMetaData_alloc failed')
