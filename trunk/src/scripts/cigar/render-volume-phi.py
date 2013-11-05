@@ -20,7 +20,7 @@ ReflectAtts.useYBoundary = 1
 ReflectAtts.specifiedY = 0
 ReflectAtts.useZBoundary = 1
 ReflectAtts.specifiedZ = 0
-ReflectAtts.reflections = (1, 1, 1, 1, 0, 0, 0, 0)
+ReflectAtts.reflections = (1, 0, 1, 1, 0, 0, 0, 0)
 SetOperatorOptions(ReflectAtts, 0)
 
 VolumeAtts = VolumeAttributes()
