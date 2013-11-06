@@ -1,5 +1,5 @@
 #WarpVisIt in-situ visualization scripts.
-This porject contains code to use VisIt in-situ with the Warp simulation.
+This project contains code to use VisIt in-situ with the Warp simulation.
 
 ##Install
 TODO -- python setup.py install?? CMake?? Some other??
