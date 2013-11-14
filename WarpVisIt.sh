@@ -58,6 +58,10 @@ do
             echo "WARPVISIT_SIM2_FILE=$WARPVISIT_SIM2_FILE"
             ;;
 
+        --gdb)
+            GDB=1
+            ;;
+
         --help)
             echo
             echo "Usage..."
@@ -104,7 +108,15 @@ fi
 if [[ $NUM_PROCS < 2 ]]
 then
     echo "starting serial run..."
-    LD_PRELOAD=$VISIT_MESA_LIB python WarpVisItMain.py
+    if [[ $GDB -eq 1 ]]
+    then
+        echo "starting gdb..."
+        echo "set environment LD_PRELOAD=$VISIT_MESA_LIB"
+        echo "run WarpVisItMain.py"
+        gdb python
+    else
+        LD_PRELOAD=$VISIT_MESA_LIB python WarpVisItMain.py
+    fi
 else
     echo "starting $NUM_PROCS way parallel run..."
     $MPI_EXEC -np $NUM_PROCS ./WarpVisItMPIMain.sh
