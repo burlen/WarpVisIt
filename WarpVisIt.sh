@@ -94,6 +94,15 @@ then
     exit
 fi
 
+
+if [[ -z "$VISIT_INSTALL" ]]
+then
+    VISIT_INSTALL=`which visit`
+    if [[ -n "$VISIT_INSTALL" ]]
+    then
+        VISIT_INSTALL=`dirname $VISIT_INSTALL`
+    fi
+fi
 if [[ -n "$VISIT_INSTALL" ]]
 then
     source WarpVisItEnv.sh $VISIT_INSTALL
