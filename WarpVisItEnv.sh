@@ -15,11 +15,11 @@ fi
 
 # all visit specific stuff can be used directly
 VISIT_INSTALL=$1
-$VISIT_INSTALL/bin/visit -env | grep -v LD_LIB | sed -e 's/^/export /' > .tmpVisItEnv
+#$VISIT_INSTALL/bin/visit -env | grep -v LD_LIB | sed -e 's/^/export /' > .tmpVisItEnv
 
 # handle this separately because visit left
 # alone will destroy the LD_LIBRARY path
-ld_vars=`$VISIT_INSTALL/bin/visit -env | grep LD_LIB`
+ld_vars=`$VISIT_INSTALL/bin/visit -env -engine | grep LD_LIB`
 for var in $ld_vars
 do
   echo "export $var:$LD_LIBRARY_PATH" >> .tmpVisItEnv

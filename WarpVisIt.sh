@@ -111,13 +111,15 @@ then
     if [[ $GDB -eq 1 ]]
     then
         echo "starting gdb..."
-        echo "set environment LD_PRELOAD=$VISIT_MESA_LIB"
+        #echo "set environment LD_PRELOAD=$VISIT_MESA_LIB"
         echo "run WarpVisItMain.py"
         gdb python
     else
-        LD_PRELOAD=$VISIT_MESA_LIB python WarpVisItMain.py
+        #LD_PRELOAD=$VISIT_MESA_LIB python WarpVisItMain.py
+        python WarpVisItMain.py
     fi
 else
     echo "starting $NUM_PROCS way parallel run..."
-    $MPI_EXEC -np $NUM_PROCS ./WarpVisItMPIMain.sh
+    #$MPI_EXEC -np $NUM_PROCS ./WarpVisItMPIMain.sh
+    $MPI_EXEC -np $NUM_PROCS pyMPI WarpVisItMain.py
 fi
