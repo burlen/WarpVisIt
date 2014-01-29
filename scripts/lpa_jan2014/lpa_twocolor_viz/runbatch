@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -q regular
+#PBS -l mppwidth=1200
+#PBS -l walltime=04:00:00
+#PBS -N TCO
+#PBS -e TCO.err
+#PBS -o TCO.out
+#PBS -V
+#PBS -m n
+#PBS -A m558
+
+export CRAY_ROOTFS=DSL
+
+export PYTHONPATH=
+mydir=$SCRATCH/TCO
+rm -fr $mydir
+mkdir -p $mydir
+
+cd $PBS_O_WORKDIR
+
+cp *.py $mydir/.
+cp *.gp $mydir/.
+cp runbatch $mydir/.
+cd $mydir
+
+aprun -n 1200 /scratch2/scratchdirs/grote/public/Python/bin/pyMPI lpa_twocolor.py -p 30 1 40
