@@ -1,0 +1,14 @@
+Oliver's Labtop:
+----------------
+export PATH=/Users/oruebel/Devel/Libraries/pyMPI:$PATH
+./WarpVisIt.sh -np=4  --warp-script=/Users/oruebel/Devel/WarpVisIt/scripts/lpa_jan2014/lpa_twocolor_visit.py --visit-install=/Users/oruebel/Devel/visit/install --interactive --sim2-file=/Users/oruebel/Devel/testLPAtwocolor.sim2
+
+
+- It looks like in the script we have fixed number of steps, rather than the dynamically changing steps.
+  Should we use 
+       step(nint(560/dtcoef*float(nzplambda)/16))
+  as max number of steps rather than step(3001*280) that is currently used?
+- The use of global variables is problematic. Had to identify and declare all variables that
+  were used in a global scope in the setup script
+- Added option to disable the adding of the liveplots function to disable plots from Warp
+
