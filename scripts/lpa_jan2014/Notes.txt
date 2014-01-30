@@ -1,9 +1,28 @@
+Git repo:
+--------
+- scripts/lpa_jan2014 : This folder contains the scripts used for running with VisIt
+- scripts/lpa_jan2014/lpa_twocolor_viz : This folder contains the original scripts as provided by Jean-Luc Vay 
+
 Oliver's Labtop:
 ----------------
 export PATH=/Users/oruebel/Devel/Libraries/pyMPI:$PATH
 ./WarpVisIt.sh -np=4  --warp-script=/Users/oruebel/Devel/WarpVisIt/scripts/lpa_jan2014/lpa_twocolor_visit.py --visit-install=/Users/oruebel/Devel/visit/install --interactive --sim2-file=/Users/oruebel/Devel/testLPAtwocolor.sim2
 
+Status:
+------
+- I was able to run the sim with VisIt and have VisIt tell the simulation to step, run, pause and kill
+- Plotting results from the simulation in VisIt seemed to yield empty plots in most cases. Need to investigate why (e.g., is this a 2D vs. 3D issue in the interface classes?)
+- For the grid, I was able to plot the grid itself, an expression of procid (looked correct),  rho (all 0's), and rank (all 3's). All other variales returned empty plots.
+- For the particles I was not able to plot the mesh or any of the variables
+- I did not receive any errors on the VisIt end (aside from warnings that the plots are empty). On the sim side I received the following types of messages:
 
+VariableData's number of tuples must be greater than 0.
+The data array does not contain any data
+Error: 0 Warp failed to produce phi
+
+
+Notes:
+------
 - It looks like in the script we have fixed number of steps, rather than the dynamically changing steps.
   Should we use 
        step(nint(560/dtcoef*float(nzplambda)/16))
