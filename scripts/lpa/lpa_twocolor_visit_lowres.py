@@ -90,7 +90,16 @@ def LoadRenderScripts(scriptRoot):
     # user supplied rendering scripts
     # script names (keys) are used by the Render funciton
     # to select the desired script
-    renderingScripts = {}
+    renderingScripts = {
+        'particle v'  : 'render-particle-v.py',
+        }
+
+    for key,fileName in renderingScripts.iteritems():
+        f = open(os.path.join(scriptRoot,fileName))
+        code = f.read()
+        f.close()
+        renderingScripts[key] = code
+
     return renderingScripts
 
 
@@ -103,6 +112,8 @@ def GetActiveRenderScripts():
     The script dictionary is created by LoadRenderScripts.
     """
     scripts = []
+    if ((warp.top.it >= 332) and ((warp.top.it%4)==0)):
+      scripts.append('particle v')
     return scripts
 
 #-----------------------------------------------------------------------------

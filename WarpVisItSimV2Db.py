@@ -188,37 +188,15 @@ def getMesh(domain, name, userData):
 
     pDebug('getMesh %i %s'%(domain, name))
 
-    # particle mesh
+    # particle mesh (note: visit copies because coords are not interleaved.)
     if name == 'particle':
-        x = warp.getx(gather=0)
-        if not x.size:
-            return simV2.VISIT_INVALID_HANDLE
-        pDebug(str(x))
-        n = x.size
-        xCopy = x.tolist() # FIXME -- makes a copy
-        xvd = simV2.VisIt_VariableData_alloc()
-        if not valid(xvd):
-            pError('VisIt_VariableData_alloc failed')
-            return None
-        simV2.VisIt_VariableData_setDataF(xvd, simV2.VISIT_OWNER_SIM, 1, n, xCopy)
+        xvd = passParticleData(warp.getx(gather=0))
+        yvd = passParticleData(warp.gety(gather=0))
+        zvd = passParticleData(warp.getz(gather=0))
 
-        y = warp.gety(gather=0)
-        pDebug(str(y))
-        yCopy = y.tolist() # FIXME
-        yvd = simV2.VisIt_VariableData_alloc()
-        if not valid(yvd):
-            pError('VisIt_VariableData_alloc failed')
+        if (not (valid(xvd) and valid(yvd) and valid(zvd))):
+            pDebug('failed to pass particle locations')
             return None
-        simV2.VisIt_VariableData_setDataF(yvd, simV2.VISIT_OWNER_SIM, 1, n, yCopy)
-
-        z = warp.getz(gather=0)
-        pDebug(str(z))
-        zCopy = z.tolist() # FIXME
-        zvd = simV2.VisIt_VariableData_alloc()
-        if not valid(zvd):
-            pError('VisIt_VariableData_alloc failed')
-            return None
-        simV2.VisIt_VariableData_setDataF(zvd, simV2.VISIT_OWNER_SIM, 1, n, zCopy)
 
         mesh = simV2.VisIt_PointMesh_alloc()
         if not valid(mesh):
@@ -233,25 +211,20 @@ def getMesh(domain, name, userData):
         size = getGridSize()
         coords = getGridCoordinates()
 
-        xvd = []
-        i = 0
-        while i < 3:
-            vd = simV2.VisIt_VariableData_alloc()
-            if not valid(vd):
-                pError('VisIt_VariableData_alloc failed')
-                return None
-            simV2.VisIt_VariableData_setDataF(vd,
-                simV2.VISIT_OWNER_SIM, 1, int(size[i]),
-                coords[i].tolist()) # FIXME -- again copy
-            xvd.append(vd)
-            i += 1
+        xvd = passGridData(coords[0])
+        yvd = passGridData(coords[1])
+        zvd = passGridData(coords[2])
+
+        if (not (valid(xvd) and valid(yvd) and valid(zvd))):
+            pError('failed to pass particle locations')
+            return None
 
         mesh = simV2.VisIt_RectilinearMesh_alloc()
         if not valid(mesh):
             pError('VisIt_RectilinearMesh_alloc failed')
             return None
 
-        simV2.VisIt_RectilinearMesh_setCoordsXYZ(mesh, xvd[0], xvd[1], xvd[2])
+        simV2.VisIt_RectilinearMesh_setCoordsXYZ(mesh, xvd, yvd, zvd)
         return mesh
 
     # CSG mesh
@@ -432,7 +405,7 @@ def getVar(domain, varid, userData):
                 if not valid(vd):
                     pError('VisIt_VariableData_alloc failed')
                     return None
-                simV2.VisIt_VariableData_setDataD(vd, simV2.VISIT_OWNER_SIM, 1, n, rank)
+                simV2.VisIt_VariableData_setDataD(vd, simV2.VISIT_OWNER_COPY, 1, n, rank)
                 return vd
 
 
@@ -521,7 +494,7 @@ def getDomains(name, userData):
     if not valid(vd):
         pError('VisIt_VariableData_alloc failed')
         return None
-    simV2.VisIt_VariableData_setDataI(vd, simV2.VISIT_OWNER_VISIT, 1, 1, [rank])
+    simV2.VisIt_VariableData_setDataI(vd, simV2.VISIT_OWNER_COPY, 1, 1, [rank])
 
     doms = simV2.VisIt_DomainList_alloc()
     if not valid(doms):
@@ -532,30 +505,43 @@ def getDomains(name, userData):
     return doms
 
 #-----------------------------------------------------------------------------
-def passGridData(data):
+def passGridData(data, owner=simV2.VISIT_OWNER_VISIT_EX):
     """Helper for passing data to VisIt"""
-    pDebug(data.shape)
-    valid = lambda x : x != simV2.VISIT_INVALID_HANDLE
-    dataCopy = np.reshape(data, data.size, order='F').tolist() # FIXME -- copy*2
-    vd = simV2.VisIt_VariableData_alloc()
-    if not valid(vd):
-        pError('VisIt_VariableData_alloc failed')
-        return None
-    simV2.VisIt_VariableData_setDataD(vd, simV2.VISIT_OWNER_COPY, 1, data.size, dataCopy)
-    return vd
+    return passData(data.transpose(), owner)
 
 #-----------------------------------------------------------------------------
-def passParticleData(data):
+def passParticleData(data, owner=simV2.VISIT_OWNER_VISIT_EX):
+    """Helper for passing data to VisIt"""
+    return passData(data, owner)
+
+#-----------------------------------------------------------------------------
+def passData(data, owner=simV2.VISIT_OWNER_VISIT_EX):
     """Helper for passing data to VisIt"""
     valid = lambda x : x != simV2.VISIT_INVALID_HANDLE
+
     if not data.size:
+        # not always an error
         return simV2.VISIT_INVALID_HANDLE
-    dataCopy = data.tolist() # FIXME -- this makes a copy
+
     vd = simV2.VisIt_VariableData_alloc()
     if not valid(vd):
         pError('VisIt_VariableData_alloc failed')
-        return None
-    simV2.VisIt_VariableData_setDataD(vd, simV2.VISIT_OWNER_SIM, 1, data.size, dataCopy)
+        return simV2.VISIT_INVALID_HANDLE
+
+    ierr = simV2.VISIT_ERROR
+    if (data.dtype == np.float64):
+        ierr = simV2.VisIt_VariableData_setDataD(vd, owner, 1, data.size, data)
+    elif (data.dtype == np.float32):
+        ierr = simV2.VisIt_VariableData_setDataF(vd, owner, 1, data.size, data)
+    elif (data.dtype == np.int32):
+        ierr = simV2.VisIt_VariableData_setDataI(vd, owner, 1, data.size, data)
+    elif (data.dtype == np.byte):
+        ierr = simV2.VisIt_VariableData_setDataC(vd, owner, 1, data.size, data)
+
+    if (ierr == simV2.VISIT_ERROR):
+        pError('VisIt_VariableData_setData failed')
+        return simV2.VISIT_INVALID_HANDLE
+
     return vd
 
 #-----------------------------------------------------------------------------
