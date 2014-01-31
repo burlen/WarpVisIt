@@ -58,7 +58,24 @@ zstart_laser=None
 em=None
 laser_radius=None 
 laser_radius1 = None
-live_plot_freq = None 
+live_plot_freq = None
+elec=None
+prot=None
+ions=None
+zstart_laser1=None
+zstart_ions_lab=None
+Tstart_laser1=None
+laser_amplitude1=None
+laser_phase1=None
+laser_profile1=None
+k1=None
+w1=None
+ZR1=None
+laser_total_length1=None
+Eamp1=None
+laser_duration1=None
+laser_risetime1=None
+
 
 
 #-----------------------------------------------------------------------------
@@ -164,7 +181,7 @@ def pldens():
 
 # --- defines subroutine injecting plasma
 def loadplasma():
- global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, betafrm, Lplasma, zstart_plasma, zstart_ions, ions, dim, rp0
+ global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, betafrm, Lplasma, zstart_plasma, zstart_ions, ions, dim, rp0, elec , prot, ions 
  while(zpos>=zstart0 and (zpos+betafrm*clight*top.time<Lplasma)):
     z0 = zstart0+zp0
     # --- sets ramp by adjusting weight
@@ -234,7 +251,7 @@ def laser_profile1(x,y):
     return exp(-r21/rw1**2)
 
 def laser_func1(x,y,t):
-    global laser_amplitude1,laser_phase1,laser_profile1,k1,w1,ZR1,vg,zstart_ions_lab
+    global laser_amplitude1,laser_phase1,laser_profile1,k1,w1,ZR1,vg,zstart_ions_lab, Tstart_laser1
     em.laser_source_z=zstart_laser1
     z=vg*(top.time-laser_risetime)+zstart_laser1
     if z<=zstart_ions_lab:z=0
@@ -251,7 +268,7 @@ def laser_func1(x,y,t):
     #return [E1*sin(angle1),0] #Ex
 
 def add_external_laser():
-    global vg
+    global vg, zstart_laser1
     #vg=sqrt(1-kplab*kplab/k1lab/k1lab)*clight
     il = w3d.jmin
     iu = w3d.jmax
@@ -326,7 +343,7 @@ def Initialize():
     """
     Setup IC and start the simulation, but don't run it yet.
     """
-    global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, diagnosticsScript, laser_total_length,Eamp,laser_duration,laser_risetime, laser_waist, laser_amplitude,laser_phase,laser_profile,k0,w0, vg, max_diff_density, max_radius, max_parab_radius, norm_diff_density, betafrm, Lplasma, zstart_plasma, zstart_ions, length_pramp, length_pramp_exit, length_iramp, Lions, length_iramp_exit, dens_ions, dens0, ions, rp0, zstart_laser, em, laser_radius, laser_radius1, live_plot_freq
+    global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, diagnosticsScript, laser_total_length,Eamp,laser_duration,laser_risetime, laser_waist, laser_amplitude,laser_phase,laser_profile,k0,w0, vg, max_diff_density, max_radius, max_parab_radius, norm_diff_density, betafrm, Lplasma, zstart_plasma, zstart_ions, length_pramp, length_pramp_exit, length_iramp, Lions, length_iramp_exit, dens_ions, dens0, ions, rp0, zstart_laser, em, laser_radius, laser_radius1, live_plot_freq, elec , prot, ions, zstart_laser1, zstart_ions_lab, Tstart_laser1, laser_amplitude1, laser_phase1, laser_profile1, k1, w1, ZR1, laser_total_length1, Eamp1,laser_duration1, laser_risetime1
  
     
     home=os.getenv('HOME')
@@ -373,7 +390,7 @@ def Initialize():
     stencil            = 0      # 0 = Yee; 1 = Yee-enlarged (Karkkainen) on EF,B; 2 = Yee-enlarged (Karkkainen) on E,F 
                                 # use 0 or 1; 2 does not verify Gauss Law
     if dim=="1d":stencil=0
-    dtcoef             = 0.25/4     # coefficient to multiply default time step that is set at the EM solver CFL
+    dtcoef             = 1. #0.25/4     # coefficient to multiply default time step that is set at the EM solver CFL
     top.depos_order    = 3      # particles deposition order (1=linear, 2=quadratic, 3=cubic)
     top.efetch         = 4      # field gather type (1=from nodes "momentum conserving"; 4=from Yee mesh "energy conserving")
     nzstations         = 50     # number of beam diag z-stations
@@ -573,9 +590,9 @@ def Initialize():
     # number of grid cells
     #-------------------------------------------------------------------------------
     # --- transverse
-    nx = 1200
+    nx = 1200/6
     # --- longitudinal
-    nzplambda =60 
+    nzplambda =60/6
 
     #-------------------------------------------------------------------------------
     # number of plasma macro-particles/cell
@@ -705,13 +722,13 @@ def Initialize():
     weight     = 1.*dens0*w3d.dx*w3d.dy*w3d.dz/(nppcellx*nppcelly*nppcellz) # weight of plasma macro-particles
     weightbeam = 0. # needs to be fixed
 
-    # --- create e- beam species
-    if l_beam:
-      beam = Species(type=Electron,weight=weightbeam)
     # --- create plasma electron species
     elec = Species(type=Electron,weight=weight)
     # --- create plasma electron species
     prot = Species(type=Proton,weight=weight)
+    # --- create e- beam species
+    if l_beam:
+      beam = Species(type=Electron,weight=weightbeam)
     # --- create plasma ion species
     # --- in this example, initial charge state is +5 
     # --- charge states +6 and +7 are also considered
@@ -1002,4 +1019,5 @@ def Initialize():
         installafterstep(liveplots)
 
     print '\Initialization complete\n'
+    #step(800)
     return
