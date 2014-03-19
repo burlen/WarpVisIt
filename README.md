@@ -8,10 +8,10 @@ TODO -- python setup.py install?? CMake?? Some other??
 The *WarpVisIt.sh* is used to launch runs. The user has to at least provide a simulation script, and may optionally provide any number of rendering scripts for non-interactive runs. For more information see the output of WarpVisIt.sh --help.
 
 ###Interactive Example
-./WarpVisIt.sh -np=8  --warp-script=/work/warp-visit/WarpVisIt/scripts/cigar/cigar.py --visit-install=/work/warp-visit/visit/visit-install/ --sim2-file=/work/warp-visit/visit/Warp.sim2 --script-dir=/work/warp-visit/WarpVisIt/scripts/cigar --interactive
+./WarpVisIt.sh -np=8  --warp-script=`pwd`/scripts/cigar/cigar.py --visit-install=`pwd`/../visit-install/ --sim2-file=`pwd`/../Warp.sim2 --script-dir=`pwd`/scripts/cigar --interactive
 
 ###Non-interactive Example
-./WarpVisIt.sh -np=8  --warp-script=/work/warp-visit/WarpVisIt/scripts/cigar/cigar.py --visit-install=/work/warp-visit/visit/visit-install/ --sim2-file=/work/warp-visit/visit/Warp.sim2 --script-dir=/work/warp-visit/WarpVisIt/scripts/cigar
+./WarpVisIt.sh -np=8  --warp-script=`pwd`/scripts/cigar/cigar.py --visit-install=`pwd`/../visit-install/ --sim2-file=`pwd`/../Warp.sim2 --script-dir=`pwd`/scripts/cigar
 
 ###Simulation script
 The user must provide a script to configure the simulation and visualizaitons. The API is as follows:
