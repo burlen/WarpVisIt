@@ -251,11 +251,11 @@ class WarpVisItEngine:
         simV2.VisItSetDirectory(self.__Env.GetRoot())
 
         if traceFile:
-            VisItOpenTraceFile(visitTraceFile)
+            simV2.VisItOpenTraceFile(traceFile)
             self.__HasTrace = True
 
         if visitOpts:
-            VisItSetOptions(visitOpts);
+            simV2.VisItSetOptions(visitOpts);
 
         if self.__CommRank == 0:
             if not simV2.VisItInitializeSocketAndDumpSimFile(
