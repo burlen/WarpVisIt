@@ -1,10 +1,5 @@
-#Make sure the other required scripts are accesible
 import os
 import sys
-scriptDir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append( scriptDir )
-
-
 from warp import *
 from em3dsolver import *
 from tunnel_ionization import *
@@ -13,8 +8,8 @@ from species import *
 import PRpickle as PR
 import PWpickle as PW
 
-diagnosticsScript = os.path.join( scriptDir , 'lpa_basic_diags.py' ) #Generate absolute path for diagnostic script
-enableWarpLivePlots = True  #Added option to enable/disable Warp's live plots
+#diagnosticsScript = os.path.join(scriptDir , 'lpa_basic_diags.py' ) #Generate absolute path for diagnostic script
+#enableWarpLivePlots = False #Added option to enable/disable Warp's live plots
 
 #Declare global variables used in various setup functions. The variables are
 #initalized in the Initalize function
@@ -56,7 +51,7 @@ dim=None
 rp0=None
 zstart_laser=None
 em=None
-laser_radius=None 
+laser_radius=None
 laser_radius1 = None
 live_plot_freq = None
 elec=None
@@ -75,8 +70,6 @@ laser_total_length1=None
 Eamp1=None
 laser_duration1=None
 laser_risetime1=None
-
-
 
 #-----------------------------------------------------------------------------
 def LoadRenderScripts(scriptRoot):
@@ -101,7 +94,6 @@ def LoadRenderScripts(scriptRoot):
         renderingScripts[key] = code
 
     return renderingScripts
-
 
 #-----------------------------------------------------------------------------
 def GetActiveRenderScripts():
@@ -136,9 +128,6 @@ def Finalize():
     shutdown the simulation, cleanup etc.
     """
     pass
-
-
-
 
 def plasma_trans_profile(r):
     global max_diff_density, max_radius, max_parab_radius, norm_diff_density
@@ -192,7 +181,7 @@ def pldens():
 
 # --- defines subroutine injecting plasma
 def loadplasma():
- global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, betafrm, Lplasma, zstart_plasma, zstart_ions, ions, dim, rp0, elec , prot, ions 
+ global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, betafrm, Lplasma, zstart_plasma, zstart_ions, ions, dim, rp0, elec , prot, ions
  while(zpos>=zstart0 and (zpos+betafrm*clight*top.time<Lplasma)):
     z0 = zstart0+zp0
     # --- sets ramp by adjusting weight
@@ -237,7 +226,7 @@ def laser_amplitude(time):
 def laser_profile(x,y):
     global laser_waist, laser_radius
     r2 = x**2 + y**2
-    rw = laser_radius  
+    rw = laser_radius
     return exp(-r2/rw**2)
 
 def laser_func(x,y,t):
@@ -294,11 +283,11 @@ def add_external_laser():
     by1=ex1/clight
     top.pgroup.ex[il:iu] += ex1
     top.pgroup.ey[il:iu] += ey1
-    top.pgroup.bx[il:iu] += bx1 
+    top.pgroup.bx[il:iu] += bx1
     top.pgroup.by[il:iu] += by1
 
 def liveplots():
-  global live_plot_freq, dim 
+  global live_plot_freq, dim
   if top.it%live_plot_freq==0:
      #save_field_data()
      save_emittance()
@@ -355,8 +344,8 @@ def Initialize():
     Setup IC and start the simulation, but don't run it yet.
     """
     global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, diagnosticsScript, laser_total_length,Eamp,laser_duration,laser_risetime, laser_waist, laser_amplitude,laser_phase,laser_profile,k0,w0, vg, max_diff_density, max_radius, max_parab_radius, norm_diff_density, betafrm, Lplasma, zstart_plasma, zstart_ions, length_pramp, length_pramp_exit, length_iramp, Lions, length_iramp_exit, dens_ions, dens0, ions, rp0, zstart_laser, em, laser_radius, laser_radius1, live_plot_freq, elec , prot, ions, zstart_laser1, zstart_ions_lab, Tstart_laser1, laser_amplitude1, laser_phase1, laser_profile1, k1, w1, ZR1, laser_total_length1, Eamp1,laser_duration1, laser_risetime1
- 
-    
+
+
     home=os.getenv('HOME')
     # --- flags turning off unnecessary diagnostics (ignore for now)
     top.ifzmmnt = 0
@@ -378,10 +367,10 @@ def Initialize():
     # main parameters
     #-------------------------------------------------------------------------------
     #dim = "3d"                 # 3D calculation
-    dim = "2d"                 # 2D calculation 
-    #dim = "1d"                 # 1D calculation 
+    dim = "2d"                 # 2D calculation
+    #dim = "1d"                 # 1D calculation
     dpi=100                     # graphics resolution
-    l_test             = 0      # Will open output window on screen 
+    l_test             = 0      # Will open output window on screen
                                 # and stop before entering main loop.
     l_gist             = 1      # Turns gist plotting on/off
     l_restart          = false  # To restart simulation from an old run (works?)
@@ -398,7 +387,7 @@ def Initialize():
     l_smooth           = 1      # on/off smoothing of current density
     l_laser            = 1      # on/off laser
     l_pdump            = 0      # on/off regular dump of beam data
-    stencil            = 0      # 0 = Yee; 1 = Yee-enlarged (Karkkainen) on EF,B; 2 = Yee-enlarged (Karkkainen) on E,F 
+    stencil            = 0      # 0 = Yee; 1 = Yee-enlarged (Karkkainen) on EF,B; 2 = Yee-enlarged (Karkkainen) on E,F
                                 # use 0 or 1; 2 does not verify Gauss Law
     if dim=="1d":stencil=0
     dtcoef             = 1. #0.25/4     # coefficient to multiply default time step that is set at the EM solver CFL
@@ -434,13 +423,13 @@ def Initialize():
     microns            = 1.e-6
     femtoseconds       = 1.e-15
 
-    lambda_laser_lab   = 5.0*microns             # wavelength 
+    lambda_laser_lab   = 5.0*microns             # wavelength
     lambda_laser_lab1  = 0.4*microns             # wavelength for the second laser
 
 
 
     #-------------------------------------------------------------------------------
-    # plasma density, length and ramps 
+    # plasma density, length and ramps
     #-------------------------------------------------------------------------------
     # --- in lab frame
     dfact             = 1.                                     # coefficient factor for plasma density (for scaled simulations)
@@ -460,14 +449,14 @@ def Initialize():
     zstart_plasma     = zstart_plasma_lab/gammafrm             # plasma starting point
 
     #-------------------------------------------------------------------------------
-    # ions density, length and ramps 
+    # ions density, length and ramps
     #-------------------------------------------------------------------------------
     # --- in lab frame
     dens_ions_lab     = 0.1*dens0lab                          # ions density (flat section)
     length_iramp_lab  = 5.*lambda_laser_lab/(dfact**1.5) #4.                      # ions entrance ramp length
     length_iramp_exit_lab = 5.*lambda_laser_lab/(dfact**1.5)#4.                  # ions exit ramp length
     Lions_lab         = 20.*lambda_laser_lab/dfact**1.5#16.                        # ions total length (including ramps)
-    zstart_ions_lab   = 60.*lambda_laser_lab/(dfact**1.5)#80.    
+    zstart_ions_lab   = 60.*lambda_laser_lab/(dfact**1.5)#80.
     # --- in boosted frame
     dens_ions         = dens_ions_lab*gammafrm                 # ions density
     length_iramp      = length_iramp_lab/gammafrm              # ions ramp length
@@ -479,13 +468,13 @@ def Initialize():
     # laser parameters
     #-------------------------------------------------------------------------------
     # --- in lab frame
-    KP_L               = 2.0                    # normalized length - standard gaussian form P=P0*exp(-2xi^2/L^2)  
-    KP_SIGMA           = 3.02                   # normalized transverse spot size - standard gaussian form I=I0*exp(-2r^2/SIGMA^2)  
-    laser_radius       = KP_SIGMA / kplab         
+    KP_L               = 2.0                    # normalized length - standard gaussian form P=P0*exp(-2xi^2/L^2)
+    KP_SIGMA           = 3.02                   # normalized transverse spot size - standard gaussian form I=I0*exp(-2r^2/SIGMA^2)
+    laser_radius       = KP_SIGMA / kplab
     laser_waist        = laser_radius*2.354820   # radius -> FWHM
-    laser_length_lab   = 4.75*lambda_laser_lab #4.75    # laser length 
+    laser_length_lab   = 4.75*lambda_laser_lab #4.75    # laser length
     laser_duration_lab = laser_length_lab/clight # laser duration
-    laser_risetime_lab = 3.*laser_duration_lab   # 
+    laser_risetime_lab = 3.*laser_duration_lab   #
     laser_dura_fwhm_lab= 1.1774*laser_duration_lab
     laser_polangle     = 0                    # polarization (0=aligned with x; pi/2=aligned with y)
     a0                 = 1.17                     # normalized potential vector (amplitude)
@@ -495,50 +484,50 @@ def Initialize():
     zstart_laser_lab   = 0.
 
     # --- in boosted frame
-    lambda_laser       = lambda_laser_lab*gammafrm*(1.+betafrm)   # wavelength 
+    lambda_laser       = lambda_laser_lab*gammafrm*(1.+betafrm)   # wavelength
     laser_duration     = laser_duration_lab*gammafrm*(1.+betafrm)
     laser_length       = laser_duration/clight
     laser_risetime     = 3.*laser_duration
     laser_dura_fwhm    = 1.1774*laser_duration
-    zstart_laser       = 0. 
+    zstart_laser       = 0.
     k0                 = 2.*pi/lambda_laser
     w0                 = k0*clight
     Eamp               = a0*w0*emass*clight/echarge
-    Bamp               = Eamp/clight 
+    Bamp               = Eamp/clight
     if l_laser==0:
       Eamp*=1.e-15
       Bamp*=1.e-15
 
 
     #-------------------------add second laser---------------------------------
-    KP_L1               = 2.0                     # normalized length - standard gaussian form P=P0*exp(-2xi^2/L^2)                        
-    KP_SIGMA1           = 2.*pi/15.                     # normalized transverse spot size - standard gaussian form I=I0*exp(-2r^2/SIGMA^2)       
-    laser_radius1       = KP_SIGMA1 / kplab 
-    laser_waist1        = laser_radius1*2.354820   # radius -> FWHM                                                                         
-    laser_length_lab1   = 10.*lambda_laser_lab1     # laser length                                                                          
-    laser_duration_lab1 = laser_length_lab1/clight # laser duration (FWHM)                                                                  
+    KP_L1               = 2.0                     # normalized length - standard gaussian form P=P0*exp(-2xi^2/L^2)
+    KP_SIGMA1           = 2.*pi/15.                     # normalized transverse spot size - standard gaussian form I=I0*exp(-2r^2/SIGMA^2)
+    laser_radius1       = KP_SIGMA1 / kplab
+    laser_waist1        = laser_radius1*2.354820   # radius -> FWHM
+    laser_length_lab1   = 10.*lambda_laser_lab1     # laser length
+    laser_duration_lab1 = laser_length_lab1/clight # laser duration (FWHM)
     laser_risetime_lab1 = 3.*laser_duration_lab1
     laser_dura_fwhm_lab1= 1.1774*laser_duration_lab1
-    laser_polangle1     = 0                    # polarization (0=aligned with x; pi/2=aligned with y)                                   
-    a1                 =0.135                    # normalized potential vector (amplitude)                                                
-    k1lab              = 2.*pi/lambda_laser_lab1 
-    w1lab              = k1lab*clight 
+    laser_polangle1     = 0                    # polarization (0=aligned with x; pi/2=aligned with y)
+    a1                 =0.135                    # normalized potential vector (amplitude)
+    k1lab              = 2.*pi/lambda_laser_lab1
+    w1lab              = k1lab*clight
     ZR1                 = 0.5*k1lab*(laser_waist1**2)   # Rayleigh length
-    #zstart_laser_lab1  = (7.6-28.)*lambda_laser_lab                                                                   
-    # --- in boosted frame                                                                                                                
-    lambda_laser1       = lambda_laser_lab1*gammafrm*(1.+betafrm)   # wavelength                                                            
-    laser_duration1     = laser_duration_lab1*gammafrm*(1.+betafrm) 
+    #zstart_laser_lab1  = (7.6-28.)*lambda_laser_lab
+    # --- in boosted frame
+    lambda_laser1       = lambda_laser_lab1*gammafrm*(1.+betafrm)   # wavelength
+    laser_duration1     = laser_duration_lab1*gammafrm*(1.+betafrm)
     laser_length1       = laser_duration1/clight
     laser_risetime1     = 3.*laser_duration1
     laser_dura_fwhm1    = 1.1774*laser_duration1
-    #zstart_laser1  = zstart_laser_lab1/gammafrm 
-    k1                 = 2.*pi/lambda_laser1 
-    w1                 = k1*clight 
-    Eamp1               = a1*w1*emass*clight/echarge 
-    Bamp1               = Eamp1/clight 
-    if l_laser==0: 
-      Eamp1*=1.e-15 
-      Bamp1*=1.e-15 
+    #zstart_laser1  = zstart_laser_lab1/gammafrm
+    k1                 = 2.*pi/lambda_laser1
+    w1                 = k1*clight
+    Eamp1               = a1*w1*emass*clight/echarge
+    Bamp1               = Eamp1/clight
+    if l_laser==0:
+      Eamp1*=1.e-15
+      Bamp1*=1.e-15
 
 
     #-------------------------------------------------------------------------------
@@ -625,7 +614,7 @@ def Initialize():
     w3d.ymmax = w3d.xmmax
     w3d.ymmin = -w3d.ymmax
     w3d.nx = nx
-    w3d.ny = w3d.nx    
+    w3d.ny = w3d.nx
     w3d.dy = (w3d.ymmax-w3d.ymmin)/w3d.ny
     if dim in ["1d"]:
         w3d.nx = 2
@@ -635,9 +624,9 @@ def Initialize():
         w3d.ny = 2
         w3d.ymmin = -float(w3d.ny)/2
         w3d.ymmax = float(w3d.ny)/2
-    w3d.zmmin = -3.5*lambda_plasma 
+    w3d.zmmin = -3.5*lambda_plasma
     w3d.zmmax = 3.*lambda_laser#/nzplambda
-    w3d.nz = int((w3d.zmmax-w3d.zmmin)*nzplambda/lambda_laser) 
+    w3d.nz = int((w3d.zmmax-w3d.zmmin)*nzplambda/lambda_laser)
     w3d.dx = (w3d.xmmax-w3d.xmmin)/w3d.nx
     w3d.dy = (w3d.ymmax-w3d.ymmin)/w3d.ny
     w3d.dz = (w3d.zmmax-w3d.zmmin)/w3d.nz
@@ -690,7 +679,7 @@ def Initialize():
     #-------------------------------------------------------------------------------
     #  Matched spot size in channel (a0)
     #  Note - to decrease channel dN at SIGMA, make matchspot > SIGMA
-    #  then dN/dN_matched = (SIGMA^4/matchspot^4), e.g. 5.7% increase in matchspot -> 20% detuning of dN 
+    #  then dN/dN_matched = (SIGMA^4/matchspot^4), e.g. 5.7% increase in matchspot -> 20% detuning of dN
     #  tor: matchspot/sigma = (dN_matched/dN)^0.25
 
     channel_region=3.0*laser_radius
@@ -726,9 +715,9 @@ def Initialize():
       setup()
     else:
      setup()
-     
+
     #-------------------------------------------------------------------------------
-    # set particles 
+    # set particles
     #-------------------------------------------------------------------------------
     weight     = 1.*dens0*w3d.dx*w3d.dy*w3d.dz/(nppcellx*nppcelly*nppcellz) # weight of plasma macro-particles
     weightbeam = 0. # needs to be fixed
@@ -741,7 +730,7 @@ def Initialize():
     if l_beam:
       beam = Species(type=Electron,weight=weightbeam)
     # --- create plasma ion species
-    # --- in this example, initial charge state is +5 
+    # --- in this example, initial charge state is +5
     # --- charge states +6 and +7 are also considered
     ielec = Species(type=Electron,weight=weight)
     if l_ions:
@@ -798,7 +787,7 @@ def Initialize():
     #-------------------------------------------------------------------------------
     tunnel_ioniz = TunnelIonization(stride=1)
     for i in range(len(ions)-1):
-      # --- For each ionization level, add tunnel ionization event by registering 
+      # --- For each ionization level, add tunnel ionization event by registering
       # --- incident and emitted species.
       tunnel_ioniz.add(incident_species = ions[i],
                        emitted_species  = [ ions[i+1] , ielec ])
@@ -856,30 +845,21 @@ def Initialize():
     # --- set the transverse profile
     wp0=plasma_trans_profile(rp0)
 
-    
     if l_plasma:installuserinjection(loadplasma)
-
-
 
     #-------------------------------------------------------------------------------
     # set laser pulse shape
     #-------------------------------------------------------------------------------
-    
 
     #-------------------------------------------------------------------------------
     # set laser amplitude by combining the pulse shape, laser profile, and laser phase
     #-------------------------------------------------------------------------------
-          
-
 
     #------------------------------ add second laser--------------------------------#----------------set the time delay between two lasers--------------------------
     T_generate_laser=laser_risetime-laser_risetime1#2*laser_dura_fwhm  # time for generate laser pulses
     Tstart_laser1=T_generate_laser
     zstart_laser1=zstart_laser-21.25*lambda_laser
     vg=sqrt(1-kplab*kplab/k1lab/k1lab)*clight
-
-
-         
 
     #-------------------------------------------------------------------------------
     # initializes main field solver block
@@ -905,7 +885,6 @@ def Initialize():
     #                 l_enableovercycle=True,
                      l_verbose=l_verbose)
 
-
     if l_external_field:
       installothereuser(add_external_laser)
 
@@ -917,7 +896,7 @@ def Initialize():
 
     # --- load diagnostics
     #execfile('lpa_basic_diags.py')
-    execfile( diagnosticsScript )
+    #execfile( diagnosticsScript )
 
     #-------------------------------------------------------------------------------
     # intializes e- beam
@@ -993,7 +972,6 @@ def Initialize():
     #-------------------------------------------------------------------------------
     print 'register solver'
     registersolver(em)
-    print 'done'
 
     #-------------------------------------------------------------------------------
     # sets moving window velocity
@@ -1004,8 +982,8 @@ def Initialize():
     #-------------------------------------------------------------------------------
     # set a few shortcuts
     #-------------------------------------------------------------------------------
-    el=elec             
-    f = em.fields
+    #el=elec
+    #f = em.fields
     #bhist=ones([nions,w3d.nz+1])
     #bhist[1:,:]=0.
     #def accuhist():
@@ -1022,13 +1000,15 @@ def Initialize():
 
     #installafterstep(accuhist)
 
+    #window(1,hcp='lineout.cgm',dump=1,display='')
+    #window(2,hcp='Ex.cgm',dump=1,display='')
 
-    window(1,hcp='lineout.cgm',dump=1,display='')
-    window(2,hcp='Ex.cgm',dump=1,display='') 
+    #if enableWarpLivePlots :
+    #    installafterstep(liveplots)
 
-    if enableWarpLivePlots :
-        installafterstep(liveplots)
+    if (len(warp.listofallspecies) < 1):
+        raise RuntimeError('no particle species!')
 
-    print '\Initialization complete\n'
+    print 'initialization complete'
     #step(800)
     return
