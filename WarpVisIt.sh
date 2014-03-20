@@ -63,6 +63,7 @@ do
                 exit
             else
                 export WARPVISIT_SCRIPT_DIR
+                export PYTHONPATH=${PYTHONPATH}:${WARPVISIT_SCRIPT_DIR}
                 echo "VISIT_SCRIPT=$VISIT_SCRIPT"
             fi
             ;;
