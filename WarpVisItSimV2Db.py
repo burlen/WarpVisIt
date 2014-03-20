@@ -49,26 +49,61 @@ def getMetaData(userData):
           warp.top.it,
           warp.top.time)
 
-    # particle mesh
-    meshmd = simV2.VisIt_MeshMetaData_alloc()
-    if not valid(meshmd):
-        pError('VisIt_MeshMetaData_alloc failed')
-        return None
-    simV2.VisIt_MeshMetaData_setName(meshmd, 'particle')
-    simV2.VisIt_MeshMetaData_setMeshType(meshmd, simV2.VISIT_MESHTYPE_POINT)
-    simV2.VisIt_MeshMetaData_setTopologicalDimension(meshmd, 0)
-    simV2.VisIt_MeshMetaData_setSpatialDimension(meshmd, 3)
-    simV2.VisIt_MeshMetaData_setNumDomains(meshmd, nDomains)
-    simV2.VisIt_MeshMetaData_setDomainTitle(meshmd, 'Domains')
-    simV2.VisIt_MeshMetaData_setDomainPieceName(meshmd, 'domain')
-    simV2.VisIt_MeshMetaData_setNumGroups(meshmd, 0)
-    simV2.VisIt_MeshMetaData_setXUnits(meshmd, 'm')
-    simV2.VisIt_MeshMetaData_setYUnits(meshmd, 'm')
-    simV2.VisIt_MeshMetaData_setZUnits(meshmd, 'm')
-    simV2.VisIt_MeshMetaData_setXLabel(meshmd, 'x')
-    simV2.VisIt_MeshMetaData_setYLabel(meshmd, 'y')
-    simV2.VisIt_MeshMetaData_setZLabel(meshmd, 'z')
-    simV2.VisIt_SimulationMetaData_addMesh(simmd, meshmd)
+    # particles
+    for pMeshName in getParticleMeshNames():
+        # see: warp/scripts/species.py
+        # a mesh for each species
+        meshmd = simV2.VisIt_MeshMetaData_alloc()
+        simV2.VisIt_MeshMetaData_setName(meshmd, pMeshName)
+        simV2.VisIt_MeshMetaData_setMeshType(meshmd, simV2.VISIT_MESHTYPE_POINT)
+        simV2.VisIt_MeshMetaData_setTopologicalDimension(meshmd, 0)
+        simV2.VisIt_MeshMetaData_setSpatialDimension(meshmd, 3)
+        simV2.VisIt_MeshMetaData_setNumDomains(meshmd, nDomains)
+        simV2.VisIt_MeshMetaData_setDomainTitle(meshmd, 'Domains')
+        simV2.VisIt_MeshMetaData_setDomainPieceName(meshmd, 'domain')
+        simV2.VisIt_MeshMetaData_setNumGroups(meshmd, 0)
+        simV2.VisIt_MeshMetaData_setXUnits(meshmd, 'm')
+        simV2.VisIt_MeshMetaData_setYUnits(meshmd, 'm')
+        simV2.VisIt_MeshMetaData_setZUnits(meshmd, 'm')
+        simV2.VisIt_MeshMetaData_setXLabel(meshmd, 'x')
+        simV2.VisIt_MeshMetaData_setYLabel(meshmd, 'y')
+        simV2.VisIt_MeshMetaData_setZLabel(meshmd, 'z')
+        simV2.VisIt_SimulationMetaData_addMesh(simmd, meshmd)
+        # per species data
+        pVarNames = ['pid','n','x','y','z','w','r',
+            'theta','vtheta','etheta','btheta',
+            'vx','vy','vz','vr','ux','uy','uz',
+            'ex','ey','ez','er','bx','by','bz','br',
+            'xp','yp','zp','rp','tp','gaminv','weights',
+            'ke','rank']
+        pVarNames.sort()
+        for var in pVarNames:
+            vmd = simV2.VisIt_VariableMetaData_alloc()
+            if not valid(vmd):
+                pError('VisIt_VariableMetaData_alloc failed')
+                return None
+            varname = '%s%s%s'%(pMeshName,varsep,var)
+            simV2.VisIt_VariableMetaData_setName(vmd, varname)
+            simV2.VisIt_VariableMetaData_setMeshName(vmd, pMeshName)
+            simV2.VisIt_VariableMetaData_setType(vmd, simV2.VISIT_VARTYPE_SCALAR)
+            simV2.VisIt_VariableMetaData_setCentering(vmd, simV2.VISIT_VARCENTERING_NODE)
+            simV2.VisIt_SimulationMetaData_addVariable(simmd, vmd)
+        # expressions
+        expname = lambda x : x[0]
+        expstr = lambda x : x[1]
+        exptype = lambda x : x[2]
+        for exp in [('{0}/v','{{<{0}/vx>, <{0}/vy>, <{0}/vz>}}',simV2.VISIT_VARTYPE_VECTOR),
+              ('{0}/V','sqrt(<{0}/vx>*<{0}/vx>+<{0}/vy>*<{0}/vy>+<{0}/vz>*<{0}/vz>)',simV2.VISIT_VARTYPE_SCALAR),
+              ('{0}/B','sqrt(<{0}/bx>*<{0}/bx>+<{0}/by>*<{0}/by>+<{0}/bz>*<{0}/bz>)',simV2.VISIT_VARTYPE_SCALAR),
+              ('{0}/E','sqrt(<{0}/ex>*<{0}/ex>+<{0}/ey>*<{0}/ey>+<{0}/ez>*<{0}/ez>)',simV2.VISIT_VARTYPE_SCALAR) ]:
+            expmd = simV2.VisIt_ExpressionMetaData_alloc()
+            if not valid(expmd):
+                pError('VisIt_ExpressionMetaData_alloc failed')
+                return None
+            simV2.VisIt_ExpressionMetaData_setName(expmd, expname(exp).format(pMeshName))
+            simV2.VisIt_ExpressionMetaData_setDefinition(expmd, expstr(exp).format(pMeshName))
+            simV2.VisIt_ExpressionMetaData_setType(expmd, exptype(exp))
+            simV2.VisIt_SimulationMetaData_addExpression(simmd, expmd)
 
     # field mesh
     meshmd = simV2.VisIt_MeshMetaData_alloc()
@@ -112,22 +147,6 @@ def getMetaData(userData):
     simV2.VisIt_MeshMetaData_setZLabel(meshmd, 'z')
     simV2.VisIt_SimulationMetaData_addMesh(simmd, meshmd)
 
-    # particle data arrays
-    for var in ['pid','r','rp','theta','w','vdrifts',
-        'vx','vy','vz','vr','ux','uy','uz','etheta',
-        'er','ex','ey','ez','bx','by','bz','xp','yp',
-        'zp','tp','rank']:
-        vmd = simV2.VisIt_VariableMetaData_alloc()
-        if not valid(vmd):
-            pError('VisIt_VariableMetaData_alloc failed')
-            return None
-        varname = 'particle%s%s'%(varsep,var)
-        simV2.VisIt_VariableMetaData_setName(vmd, varname)
-        simV2.VisIt_VariableMetaData_setMeshName(vmd, 'particle')
-        simV2.VisIt_VariableMetaData_setType(vmd, simV2.VISIT_VARTYPE_SCALAR)
-        simV2.VisIt_VariableMetaData_setCentering(vmd, simV2.VISIT_VARCENTERING_NODE)
-        simV2.VisIt_SimulationMetaData_addVariable(simmd, vmd)
-
     # field data arrays
     for var in ['ax','ay','az','A',
         'bx','by','bz','B','J','jx','jy',
@@ -143,26 +162,6 @@ def getMetaData(userData):
         simV2.VisIt_VariableMetaData_setCentering(vmd, simV2.VISIT_VARCENTERING_NODE)
         simV2.VisIt_SimulationMetaData_addVariable(simmd, vmd)
 
-    # expressions
-    expname = lambda x : x[0]
-    expstr = lambda x : x[1]
-    exptype = lambda x : x[2]
-    for exp in [('{0}/v','{{<{0}/vx>, <{0}/vy>, <{0}/vz>}}',simV2.VISIT_VARTYPE_VECTOR),
-          ('{0}/V','sqrt(<{0}/vx>*<{0}/vx>+<{0}/vy>*<{0}/vy>+<{0}/vz>*<{0}/vz>)',simV2.VISIT_VARTYPE_SCALAR),
-          ('{0}/B','sqrt(<{0}/bx>*<{0}/bx>+<{0}/by>*<{0}/by>+<{0}/bz>*<{0}/bz>)',simV2.VISIT_VARTYPE_SCALAR),
-          ('{0}/E','sqrt(<{0}/ex>*<{0}/ex>+<{0}/ey>*<{0}/ey>+<{0}/ez>*<{0}/ez>)',simV2.VISIT_VARTYPE_SCALAR) ]:
-#          ('const','coord(csg)[0]*0',simV2.VISIT_VARTYPE_SCALAR)]:
-#          ('particle proc id','procid(particles)',simV2.VISIT_VARTYPE_SCALAR),
-#          ('field proc id','procid(fields)',simV2.VISIT_VARTYPE_SCALAR)]:
-
-        expmd = simV2.VisIt_ExpressionMetaData_alloc()
-        if not valid(expmd):
-            pError('VisIt_ExpressionMetaData_alloc failed')
-            return None
-        simV2.VisIt_ExpressionMetaData_setName(expmd, expname(exp).format('particle'))
-        simV2.VisIt_ExpressionMetaData_setDefinition(expmd, expstr(exp).format('particle'))
-        simV2.VisIt_ExpressionMetaData_setType(expmd, exptype(exp))
-        simV2.VisIt_SimulationMetaData_addExpression(simmd, expmd)
 
     # commands
     for cmd in ['step', 'run', 'pause', 'kill']:
@@ -189,10 +188,12 @@ def getMesh(domain, name, userData):
     pDebug('getMesh %i %s'%(domain, name))
 
     # particle mesh (note: visit copies because coords are not interleaved.)
-    if name == 'particle':
-        xvd = passParticleData(warp.getx(gather=0))
-        yvd = passParticleData(warp.gety(gather=0))
-        zvd = passParticleData(warp.getz(gather=0))
+    pMeshNames = getParticleMeshNames()
+    if pMeshNames.count(name) > 0:
+        species = getSpecies(name)
+        xvd = passParticleData(species.getx(gather=0))
+        yvd = passParticleData(species.gety(gather=0))
+        zvd = passParticleData(species.getz(gather=0))
 
         if (not (valid(xvd) and valid(yvd) and valid(zvd))):
             pDebug('failed to pass particle locations')
@@ -317,87 +318,14 @@ def getVar(domain, varid, userData):
     varname = tok[1]
 
     try:
-
         # particle data
-        if meshname == 'particle':
-            # pid
-            if varname == 'pid':
-                return passParticleData(warp.getpid(gather=0))
-            # w
-            if varname == 'w':
-                return passParticleData(warp.getw(gather=0))
-            # r
-            if varname == 'r':
-                return passParticleData(warp.getr(gather=0))
-            # rp
-            if varname == 'rp':
-                return passParticleData(warp.getrp(gather=0))
-            # theta
-            if varname == 'theta':
-                return passParticleData(warp.gettheta(gather=0))
-            # vdrifts
-            if varname == 'vdrifts':
-                return passParticleData(warp.getvdrifts(gather=0))
-            # vx
-            if varname == 'vx':
-                return passParticleData(warp.getvx(gather=0))
-            # vy
-            if varname == 'vy':
-                return passParticleData(warp.getvy(gather=0))
-            # vz
-            if varname == 'vz':
-                return passParticleData(warp.getvz(gather=0))
-            # vr
-            if varname == 'vr':
-                return passParticleData(warp.getvr(gather=0))
-            # ux
-            if varname == 'ux':
-                return passParticleData(warp.getux(gather=0))
-            # uy
-            if varname == 'uy':
-                return passParticleData(warp.getuy(gather=0))
-            # uz
-            if varname == 'uz':
-                return passParticleData(warp.getuz(gather=0))
-            # etheta
-            if varname == 'etheta':
-                return passParticleData(warp.getetheta(gather=0))
-            # er
-            if varname == 'er':
-                return passParticleData(warp.geter(gather=0))
-            # ex
-            if varname == 'ex':
-                return passParticleData(warp.getex(gather=0))
-            # ey
-            if varname == 'ey':
-                return passParticleData(warp.getey(gather=0))
-            # ez
-            if varname == 'ez':
-                return passParticleData(warp.getez(gather=0))
-            # bx
-            if varname == 'bx':
-                return passParticleData(warp.getbx(gather=0))
-            # by
-            if varname == 'by':
-                return passParticleData(warp.getby(gather=0))
-            # bz
-            if varname == 'bz':
-                return passParticleData(warp.getbz(gather=0))
-            # xp
-            if varname == 'xp':
-                return passParticleData(warp.getxp(gather=0))
-            # yp
-            if varname == 'yp':
-                return passParticleData(warp.getyp(gather=0))
-            # zp
-            if varname == 'zp':
-                return passParticleData(warp.getzp(gather=0))
-            # tp
-            if varname == 'tp':
-                return passParticleData(warp.gettp(gather=0))
+        pMeshNames = getParticleMeshNames()
+        if pMeshNames.count(meshname) > 0:
+            species = getSpecies(meshname)
+            print species
             # rank
             if varname == 'rank':
-                n = warp.getx(gather=0).size # FIXME -- must be defined somehwere?
+                n = species.getx(gather=0).size # FIXME -- must be defined somehwere?
                 if not n:
                     return simV2.VISIT_INVALID_HANDLE
                 rank = [float(parallel.get_rank())] * n # FIXME -- list ?
@@ -406,8 +334,10 @@ def getVar(domain, varid, userData):
                     pError('VisIt_VariableData_alloc failed')
                     return None
                 simV2.VisIt_VariableData_setDataD(vd, simV2.VISIT_OWNER_COPY, 1, n, rank)
+                del rank
                 return vd
-
+            getFunc = getattr(species,'get' + varname)
+            return passParticleData(getFunc(gather=0))
 
         # grided data
         elif meshname == 'grid':
@@ -467,8 +397,8 @@ def getVar(domain, varid, userData):
 
     # the simulation crashed when we asked for
     # that variable
-    except:
-        pError('Warp failed to produce %s'%(varname))
+    except Exception as inst:
+        pError('Warp failed to produce %s\n%s\n'%(varname,str(inst)))
         return simV2.VISIT_INVALID_HANDLE
 
     # invalid
@@ -520,7 +450,9 @@ def passData(data, owner=simV2.VISIT_OWNER_VISIT_EX):
     valid = lambda x : x != simV2.VISIT_INVALID_HANDLE
 
     if not data.size:
-        # not always an error
+        # not always an error, some processes
+        # wont have data.
+        #pDebug('zero size for %s'%(str(data)))
         return simV2.VISIT_INVALID_HANDLE
 
     vd = simV2.VisIt_VariableData_alloc()
@@ -640,3 +572,34 @@ def getGridCoordinates(cells=False):
         coords[i] += x0[i]
         i += 1
     return coords
+
+#-----------------------------------------------------------------------------
+def getParticleMeshName(specie, specieEnum):
+    """Given a species construct a mesh name"""
+    if (specie.name is None) or (specie.name==''):
+        if not specieEnum.has_key(specie.type):
+            specieEnum[specie.type] = 0
+        meshName = '%s%d'%(specie.type, specieEnum[specie.type])
+        specieEnum[specie.type] += 1
+    else:
+        meshName = specie.name
+    return meshName
+
+#-----------------------------------------------------------------------------
+def getParticleMeshNames():
+    """Get list of particle meshes from warp"""
+    meshNames = []
+    speciesEnum = {}
+    for specie in warp.listofallspecies:
+        meshNames.append(getParticleMeshName(specie, speciesEnum))
+    return meshNames
+
+#-----------------------------------------------------------------------------
+def getSpecies(meshName):
+    """Given a mesh name locate the spceies object for it"""
+    meshNames = getParticleMeshNames()
+    if meshNames.count(meshName) > 0:
+        return warp.listofallspecies[meshNames.index(meshName)]
+    else:
+        pError('Could not find species for mesh %s'%(meshName))
+    return None
