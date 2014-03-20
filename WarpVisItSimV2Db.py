@@ -50,7 +50,10 @@ def getMetaData(userData):
           warp.top.time)
 
     # particles
-    for pMeshName in getParticleMeshNames():
+    pMeshNames = getParticleMeshNames()
+    if len(pMeshNames) < 1:
+        pError('No particle mesh names were found')
+    for pMeshName in pMeshNames:
         # see: warp/scripts/species.py
         # a mesh for each species
         meshmd = simV2.VisIt_MeshMetaData_alloc()
