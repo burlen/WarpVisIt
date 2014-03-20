@@ -5,6 +5,10 @@ MPI_EXEC=mpiexec
 for i in "$@"
 do
     case $i in
+        -n=*)
+            NUM_PROCS=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+            ;;
+
         -np=*)
             NUM_PROCS=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
             ;;
@@ -12,6 +16,17 @@ do
         --mpiexec=*)
             MPI_EXEC=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
             echo "MPI_EXEC=$MPI_EXEC"
+            ;;
+
+        --warpvisit-install=*)
+            WARPVISIT_INSTALL=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+            if [ ! -e "$WARPVISIT_INSTALL" ]
+            then
+                echo "ERROR: $i not found."
+                exit
+            else
+                echo "WARPVISIT_INSTALL=$WARPVISIT_INSTALL"
+            fi
             ;;
 
         --warp-script=*)
@@ -67,10 +82,12 @@ do
             echo "Usage..."
             echo "$0 [-np=X] --warp-script=X --visit-install=X [--sim2-file=X] [--visit-script=X]"
             echo
-            echo "    --warp-script   : Warp python code to configure the run"
-            echo "    --visit-install : path to the VisIt install directory"
-            echo "    --sim2-file     : where the run should place the sim2 file (optional)"
-            echo "    --script-dir    : where to find user supplied scripts (optional)"
+            echo "    --warp-script       : Warp python code to configure the run"
+            echo "    --visit-install     : path to the VisIt install directory"
+            echo "    --warpvisit-install : path to the WarpVisIt install directory"
+            echo "    --sim2-file         : where the run should place the sim2 file (optional)"
+            echo "    --script-dir        : where to find user supplied scripts (optional)"
+            echo "    --interactive       : wait for connection to WarpisIt from the VisIt GUI(optional)"
             echo
             exit
             ;;
@@ -94,6 +111,10 @@ then
     exit
 fi
 
+if [[ -z "$WARPVISIT_INSTALL" ]]
+then
+    WARPVISIT_INSTALL=`pwd`
+fi
 
 if [[ -z "$VISIT_INSTALL" ]]
 then
@@ -105,7 +126,7 @@ then
 fi
 if [[ -n "$VISIT_INSTALL" ]]
 then
-    source WarpVisItEnv.sh $VISIT_INSTALL
+    source ${WARPVISIT_INSTALL}/WarpVisItEnv.sh $VISIT_INSTALL
 fi
 
 if [[ -z "$WARPVISIT_SCRIPT_DIR" ]]
@@ -120,15 +141,12 @@ then
     if [[ $GDB -eq 1 ]]
     then
         echo "starting gdb..."
-        #echo "set environment LD_PRELOAD=$VISIT_MESA_LIB"
         echo "run WarpVisItMain.py"
         gdb python
     else
-        #LD_PRELOAD=$VISIT_MESA_LIB python WarpVisItMain.py
-        python WarpVisItMain.py
+        python ${WARPVISIT_INSTALL}/WarpVisItMain.py
     fi
 else
     echo "starting $NUM_PROCS way parallel run..."
-    #$MPI_EXEC -np $NUM_PROCS ./WarpVisItMPIMain.sh
-    $MPI_EXEC -np $NUM_PROCS pyMPI WarpVisItMain.py
+    $MPI_EXEC -n $NUM_PROCS pyMPI ${WARPVISIT_INSTALL}/WarpVisItMain.py
 fi

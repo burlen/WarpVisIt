@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # environment variables first
     warpScript = os.getenv('WARPVISIT_WARP_SCRIPT')
-    simFile = os.getenv('WARPVISIT_SIM2_FILE')
+    simFile = os.path.abspath(os.getenv('WARPVISIT_SIM2_FILE'))
     scriptRoot = os.getenv('WARPVISIT_SCRIPT_DIR')
     interactive = bool(os.getenv('WARPVISIT_INTERACTIVE'))
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         elif opt == '--script-dir':
             scriptRoot = arg
         elif opt == '--sim-file':
-            simFile = arg
+            simFile = os.path.abspath(arg)
         elif interactive == '--interactive':
             interactive = bool(arg)
         else:
@@ -98,23 +98,3 @@ if __name__ == "__main__":
     # finally run with it
     status = main(warpScript, simFile, scriptRoot, interactive)
     sys.exit(status)
-
-#    # load user specified rendering configuration (optional)
-#    # if it's provided we'll fork a CLI and Viewer. The CLI
-#    # will then take control of the run otherwise CLI does
-#    # nothing and the Viewer is assumed external.
-#    cli = WarpVisItCLI()
-#    cli.SetSimFile(engine.GetSimFile())
-#
-#    visitScriptFileName = os.getenv('VISIT_SCRIPT')
-#    if visitScriptFileName:
-#        if not os.path.isfile(visitScriptFileName):
-#            pError('VISIT_SCRIPT %s not found'%visitScriptFileName)
-#            return -1
-#        visitScript = imp.load_source('visitScript', visitScriptFileName)
-#
-#        cli.SetRenderCallback(visitScript.Render)
-#        cli.SetShouldRenderCallback(warpScript.UpdatePlots)
-#
-#    cli.Initialize()
-

@@ -1,13 +1,15 @@
 import sys
 import os
 import parallel
+import time
 
 #-----------------------------------------------------------------------------
 def pDebug(msg):
     """
     Print an debug message to stderr (if the following line is not commented)
     """
-    #sys.stderr.write('=====: %d %s\n'%(parallel.get_rank(), msg))
+    #tstr = time.strftime("%H:%M:%S", time.gmtime())
+    #sys.stderr.write('=====: %d %s %s \n'%(parallel.get_rank(), tstr, msg))
     #sys.stderr.flush()
     pass
 
