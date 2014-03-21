@@ -999,7 +999,11 @@ def Initialize():
     #if enableWarpLivePlots :
     #    installafterstep(liveplots)
 
+    i=0
     warp.listofallspecies = species.listofallspecies
+    for s in warp.listofallspecies:
+        print 'species %d %s %s'%(i,s.type.name,str(s.name))
+        i += 1
 
     if (len(warp.listofallspecies) < 1):
         raise RuntimeError('no particle species!')

@@ -60,7 +60,7 @@ def commandCallback(cmd, args, userData):
         userData.SetVisItUpdates(True)
         return True
 
-    elif cmd == 'run (no vis)':
+    elif cmd == 'continue':
         userData.SetVisItControl(False)
         userData.SetVisItUpdates(False)
         return True

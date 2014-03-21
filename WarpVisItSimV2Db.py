@@ -165,9 +165,8 @@ def getMetaData(userData):
         simV2.VisIt_VariableMetaData_setCentering(vmd, simV2.VISIT_VARCENTERING_NODE)
         simV2.VisIt_SimulationMetaData_addVariable(simmd, vmd)
 
-
     # commands
-    for cmd in ['step', 'run', 'pause', 'kill']:
+    for cmd in ['step','run','continue','pause','kill']:
         cmdmd = simV2.VisIt_CommandMetaData_alloc()
         if not valid(cmdmd):
             pError('VisIt_CommandMetaData_alloc failed')
@@ -577,14 +576,15 @@ def getGridCoordinates(cells=False):
 
 #-----------------------------------------------------------------------------
 def getParticleMeshName(species, speciesEnum):
-    """Given a speciess construct a mesh name"""
+    """Given a species construct a mesh name"""
+    meshName = species.type.name
     if (species.name is None) or (species.name==''):
         if not speciesEnum.has_key(species.type.name):
             speciesEnum[species.type.name] = 0
-        meshName = '%s%d'%(species.type.name, speciesEnum[species.type.name])
+        meshName += '-%d'%(speciesEnum[species.type.name])
         speciesEnum[species.type.name] += 1
     else:
-        meshName = species.name
+        meshName += '-' + species.name
     return meshName
 
 #-----------------------------------------------------------------------------
