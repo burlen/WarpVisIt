@@ -325,7 +325,6 @@ def getVar(domain, varid, userData):
         pMeshNames = getParticleMeshNames()
         if pMeshNames.count(meshname) > 0:
             species = getSpecies(meshname)
-            print species
             # rank
             if varname == 'rank':
                 n = species.getx(gather=0).size # FIXME -- must be defined somehwere?
@@ -577,15 +576,15 @@ def getGridCoordinates(cells=False):
     return coords
 
 #-----------------------------------------------------------------------------
-def getParticleMeshName(specie, specieEnum):
-    """Given a species construct a mesh name"""
-    if (specie.name is None) or (specie.name==''):
-        if not specieEnum.has_key(specie.type):
-            specieEnum[specie.type] = 0
-        meshName = '%s%d'%(specie.type, specieEnum[specie.type])
-        specieEnum[specie.type] += 1
+def getParticleMeshName(species, speciesEnum):
+    """Given a speciess construct a mesh name"""
+    if (species.name is None) or (species.name==''):
+        if not speciesEnum.has_key(species.type.name):
+            speciesEnum[species.type.name] = 0
+        meshName = '%s%d'%(species.type.name, speciesEnum[species.type.name])
+        speciesEnum[species.type.name] += 1
     else:
-        meshName = specie.name
+        meshName = species.name
     return meshName
 
 #-----------------------------------------------------------------------------
