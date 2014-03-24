@@ -31,3 +31,94 @@ Notes:
   were used in a global scope in the setup script
 - Added option to disable the adding of the liveplots function to disable plots from Warp
 
+
+Notes for large run:
+--------------------
+
+1) Change to high-res simulation by setting:
+
+   1.1)  dtcoef = 0.25/4 instead of (which I believe means we have finer time stepping)
+   1.2)  nx =1200 (i.e, 6 times higher transverse grid resolution)
+   1.3)  nzplambda =60 (which should also be related to higher grid resolution
+
+2) Change:
+    return [0,E1*sin(angle1)] #Ey
+    #return [E1*sin(angle1),0] #Ex
+to
+    #return [0,E1*sin(angle1)] #Ey
+    return [E1*sin(angle1),0] #Ex
+
+
+List of requested diagnostics:
+------------------------------
+
+- plasma electrons (species 'elec'):
+
+  (a) x=x, z=z, y=uy, color=uz 
+
+  (b) x=x, z=z, y=uz, color=uy 
+
+- ionized electrons (species 'ielec'):
+
+  (c) x=x, z=z, y=ux, color=uz 
+
+- combo plasma + ionized electrons
+
+  (d) plasma electrons (elec): x=x, z=z, y=0 (i.e. flat), color=ne (i.e. electron plasma density on grid)
+        ionized electrons (ielec): x=x, z=z, y=color=uz
+
+For plasma electrons (elec):
+
+  x=elec.getx() 
+  z=elec.getz() 
+  ux=elec.getux() 
+  uy=elec.getuy() 
+  uz=elec.getuz() 
+
+For ionized electrons (ielec):
+
+  x=ielec.getx() 
+  z=ielec.getz() 
+  ux=ielec.getux() 
+  uy=ielec.getuy() 
+  uz=ielec.getuz() 
+
+  then one needs to remove 'halo' particles. Here is the way we do it in Python:
+
+  # get rms values
+  xrms = sqrt(var(x))
+  yrms = sqrt(var(y))
+  zrms = sqrt(var(z))
+  uxrms = sqrt(var(ux))
+  uyrms = sqrt(var(uy))
+  uzrms = sqrt(var(uz))
+  # get average values
+  xave=ave(x)
+  yave=ave(y)
+  zave=ave(z)
+  uxave=ave(ux)
+  uyave=ave(uy)
+  uzave=ave(uz)
+  n=shape(x)[0]
+  # get indices of particles inside 3*rms in 6-D phase-space
+  ii=compress((abs(x-xave)<3*xrms) & \
+              (abs(y-yave)<3*yrms) & \
+              (abs(z-zave)<3*zrms) & \
+              (abs(ux-uxave)<3*uxrms) & \
+              (abs(uy-uyave)<3*uyrms) & \
+              (abs(uz-uzave)<3*uzrms) \
+              ,arange(n))
+   n = len(ii)
+   # get data without 'halo'
+   if n>0:
+     z=take(z,ii)
+     x=take(x,ii)
+     y=take(y,ii)
+     ux=take(ux,ii)
+     uy=take(uy,ii)
+     uz=take(uz,ii)
+   
+It would be nice to have a movie with those four views together.
+
+Let me know if you have questions.
+
