@@ -83,7 +83,7 @@ def LoadRenderScripts(scriptRoot):
     # script names (keys) are used by the Render funciton
     # to select the desired script
     renderingScripts = {
-        'particle v'  : 'render-particle-v.py',
+        '4-view' : 'render-four-views.py'
         }
 
     for key,fileName in renderingScripts.iteritems():
@@ -104,7 +104,7 @@ def GetActiveRenderScripts():
     """
     scripts = []
     if ((warp.warp.top.it >= 332) and ((warp.warp.top.it%4)==0)):
-      scripts.append('particle v')
+      scripts.append('4-view')
     return scripts
 
 #-----------------------------------------------------------------------------
@@ -1008,6 +1008,6 @@ def Initialize():
     if (len(warp.listofallspecies) < 1):
         raise RuntimeError('no particle species!')
 
-    warp.step(332)
+    warp.step(1300)
     print 'initialization complete'
     return

@@ -3,6 +3,7 @@ SetWindowLayout(4)
 
 
 def hide_if_empty():
+    sys.stderr.write('=============hide_if_empty\n')
     SetQueryFloatFormat("%g")
     SetQueryOutputToValue()
     numNodes = Query("NumNodes")
@@ -10,6 +11,7 @@ def hide_if_empty():
         HideActivePlots()
 
 def set_view():
+    sys.stderr.write('=============set_view\n')
     ResetView()
     View3DAtts = GetView3D()
     View3DAtts.viewNormal = (0.82, 0.53, 0.25)
@@ -18,6 +20,7 @@ def set_view():
 
 
 def setup_plot1():
+    sys.stderr.write('=============setup_plot1\n')
     AddPlot("Pseudocolor", "Electron-0/uz", 1, 1)
     SetActivePlots(0)
     SetActivePlots(0)
@@ -87,9 +90,8 @@ def setup_plot1():
     SetPlotOptions(PseudocolorAtts)
     DrawPlots()
 
-
 def setup_plot2():
-
+    sys.stderr.write('=============setup_plot2\n')
     AddPlot("Pseudocolor", "Electron-0/uy", 1, 1)
     SetActivePlots(0)
     SetActivePlots(0)
@@ -159,10 +161,9 @@ def setup_plot2():
     SetPlotOptions(PseudocolorAtts)
     DrawPlots()
 
-
 def setup_plot3():
-
-    AddPlot("Pseudocolor", "Electron-1/uz", 1, 1)
+    sys.stderr.write('=============setup_plot3\n')
+    AddPlot("Pseudocolor", "Electron-0/uz", 1, 1)
     SetActivePlots(0)
     SetActivePlots(0)
     AddOperator("Project", 1)
@@ -231,12 +232,13 @@ def setup_plot3():
     SetPlotOptions(PseudocolorAtts)
     DrawPlots()
 
-
 def setup_plot4():
+    sys.stderr.write('=============setup_plot4\n')
     #########################################
     # elec density                          #
     #########################################
-    AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0", 1, 1)
+    #AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0/weights", 1, 1)
+    AddPlot("Pseudocolor", "Electron-0/weights", 1, 1)
     DataBinningAtts = DataBinningAttributes()
     DataBinningAtts.numDimensions = DataBinningAtts.Two  # One, Two, Three
     DataBinningAtts.dim1BinBasedOn = DataBinningAtts.X  # X, Y, Z, Variable
@@ -401,9 +403,8 @@ def setup_plot4():
     SetPlotOptions(PseudocolorAtts)
     DrawPlots()
 
-
 def set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0):
-
+    sys.stderr.write('=============set_annotations\n')
     # Logging for SetAnnotationObjectOptions is not implemented yet.
     AnnotationAtts = AnnotationAttributes()
     AnnotationAtts.axes2D.visible = 1
@@ -607,13 +608,12 @@ def set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0):
     AnnotationAtts.axesArray.axes.grid = 0
     SetAnnotationAttributes(AnnotationAtts)
 
-
 def save_window_matrix():
-
+    sys.stderr.write('=============save_window_matrix\n')
     SaveWindowAtts = SaveWindowAttributes()
     SaveWindowAtts.outputToCurrentDirectory = 0
-    SaveWindowAtts.outputDirectory = "/Users/oruebel/Devel"
-    SaveWindowAtts.fileName = "lpa_testimage_"
+    SaveWindowAtts.outputDirectory = "./"
+    SaveWindowAtts.fileName = "lpa-4-view"
     SaveWindowAtts.family = 1
     SaveWindowAtts.format = SaveWindowAtts.PNG  # BMP, CURVE, JPEG, OBJ, PNG, POSTSCRIPT, POVRAY, PPM, RGB, STL, TIFF, ULTRA, VTK, PLY
     SaveWindowAtts.width = 3200
@@ -711,52 +711,37 @@ def save_window_matrix():
     SetSaveWindowAttributes(SaveWindowAtts)
     SaveWindow()
 
+def delete_plots():
+    SetActiveWindow(1)
+    DeleteAllPlots()
+    SetActiveWindow(2)
+    DeleteAllPlots()
+    SetActiveWindow(3)
+    DeleteAllPlots()
+    SetActiveWindow(4)
+    DeleteAllPlots()
 
+
+delete_plots()
 SetActiveWindow(1)
-SetActiveWindow(1)
-DeleteAllPlots()
 setup_plot1()
 set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
 set_view()
-hide_if_empty()
 
 SetActiveWindow(2)
-SetActiveWindow(2)
-DeleteAllPlots()
 setup_plot2()
 set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0)
 set_view()
-hide_if_empty()
 
 SetActiveWindow(3)
-SetActiveWindow(3)
-DeleteAllPlots()
 setup_plot3()
 set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=0)
 set_view()
-hide_if_empty()
 
 SetActiveWindow(4)
-SetActiveWindow(4)
-DeleteAllPlots()
 setup_plot4()
 set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0)
 set_view()
-hide_if_empty()
 
 save_window_matrix()
-  
-
-SetActiveWindow(1)
-DeleteAllPlots()
-SetActiveWindow(2)
-DeleteAllPlots()
-SetActiveWindow(3)
-DeleteAllPlots()
-SetActiveWindow(4)
-DeleteAllPlots()
-
-
-
-
-
+delete_plots()
