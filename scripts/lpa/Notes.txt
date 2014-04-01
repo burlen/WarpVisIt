@@ -66,6 +66,8 @@ List of requested diagnostics:
 
   (d) plasma electrons (elec): x=x, z=z, y=0 (i.e. flat), color=ne (i.e. electron plasma density on grid)
         ionized electrons (ielec): x=x, z=z, y=color=uz
+      Comment: The electron plasma density should be defined by the sum(weight) of the macro particles
+
 
 For plasma electrons (elec):
 

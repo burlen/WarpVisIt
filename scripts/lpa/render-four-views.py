@@ -1,6 +1,4 @@
 from visit import *
-SetWindowLayout(4)
-
 
 def hide_if_empty():
     sys.stderr.write('=============hide_if_empty\n')
@@ -163,7 +161,7 @@ def setup_plot2():
 
 def setup_plot3():
     sys.stderr.write('=============setup_plot3\n')
-    AddPlot("Pseudocolor", "Electron-0/uz", 1, 1)
+    AddPlot("Pseudocolor", "Electron-1/uz", 1, 1)
     SetActivePlots(0)
     SetActivePlots(0)
     AddOperator("Project", 1)
@@ -177,12 +175,12 @@ def setup_plot3():
     ElevateAtts.limitsMode = ElevateAtts.OriginalData  # OriginalData, CurrentPlot
     ElevateAtts.scaling = ElevateAtts.Linear  # Linear, Log, Skew
     ElevateAtts.skewFactor = 1
-    ElevateAtts.minFlag = 1
+    ElevateAtts.minFlag = 0
     ElevateAtts.min = -5e+08
-    ElevateAtts.maxFlag = 1
+    ElevateAtts.maxFlag = 0
     ElevateAtts.max = 5e+08
     ElevateAtts.zeroFlag = 0
-    ElevateAtts.variable = "Electron-0/ux"
+    ElevateAtts.variable = "Electron-1/ux"
     SetOperatorOptions(ElevateAtts, 1)
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
@@ -237,8 +235,8 @@ def setup_plot4():
     #########################################
     # elec density                          #
     #########################################
-    #AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0/weights", 1, 1)
-    AddPlot("Pseudocolor", "Electron-0/weights", 1, 1)
+    AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0", 1, 1)
+    #AddPlot("Pseudocolor", "Electron-0/weights", 1, 1)
     DataBinningAtts = DataBinningAttributes()
     DataBinningAtts.numDimensions = DataBinningAtts.Two  # One, Two, Three
     DataBinningAtts.dim1BinBasedOn = DataBinningAtts.X  # X, Y, Z, Variable
@@ -350,11 +348,50 @@ def setup_plot4():
     ElevateAtts.skewFactor = 1
     ElevateAtts.minFlag = 0
     ElevateAtts.min = 0
-    ElevateAtts.maxFlag = 1
+    ElevateAtts.maxFlag = 0
     ElevateAtts.max = 7e+08
     ElevateAtts.zeroFlag = 0
     ElevateAtts.variable = "default"
     SetOperatorOptions(ElevateAtts, 0)
+    AddOperator("Transform", 0)
+    TransformAtts = TransformAttributes()
+    TransformAtts.doRotate = 0
+    TransformAtts.rotateOrigin = (0, 0, 0)
+    TransformAtts.rotateAxis = (0, 0, 1)
+    TransformAtts.rotateAmount = 0
+    TransformAtts.rotateType = TransformAtts.Deg  # Deg, Rad
+    TransformAtts.doScale = 1
+    TransformAtts.scaleOrigin = (0, 0, 0)
+    TransformAtts.scaleX = 1
+    TransformAtts.scaleY = 1
+    TransformAtts.scaleZ = 10
+    TransformAtts.doTranslate = 0
+    TransformAtts.translateX = 0
+    TransformAtts.translateY = 0
+    TransformAtts.translateZ = 0
+    TransformAtts.transformType = TransformAtts.Similarity  # Similarity, Coordinate, Linear
+    TransformAtts.inputCoordSys = TransformAtts.Cartesian  # Cartesian, Cylindrical, Spherical
+    TransformAtts.outputCoordSys = TransformAtts.Spherical  # Cartesian, Cylindrical, Spherical
+    TransformAtts.m00 = 1
+    TransformAtts.m01 = 0
+    TransformAtts.m02 = 0
+    TransformAtts.m03 = 0
+    TransformAtts.m10 = 0
+    TransformAtts.m11 = 1
+    TransformAtts.m12 = 0
+    TransformAtts.m13 = 0
+    TransformAtts.m20 = 0
+    TransformAtts.m21 = 0
+    TransformAtts.m22 = 1
+    TransformAtts.m23 = 0
+    TransformAtts.m30 = 0
+    TransformAtts.m31 = 0
+    TransformAtts.m32 = 0
+    TransformAtts.m33 = 1
+    TransformAtts.invertLinearTransform = 0
+    TransformAtts.vectorTransformMethod = TransformAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
+    TransformAtts.transformVectors = 1
+    SetOperatorOptions(TransformAtts, 0)
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -713,35 +750,51 @@ def save_window_matrix():
 
 def delete_plots():
     SetActiveWindow(1)
+    SetActiveWindow(1)
     DeleteAllPlots()
+    SetActiveWindow(2)
     SetActiveWindow(2)
     DeleteAllPlots()
     SetActiveWindow(3)
+    SetActiveWindow(3)
     DeleteAllPlots()
+    SetActiveWindow(4)
     SetActiveWindow(4)
     DeleteAllPlots()
 
 
+#SendSimulationCommand('localhost', simFile, 'pause')
+SetWindowLayout(4)
 delete_plots()
+#SetWindowLayout(1)
+#SetWindowLayout(4)
+
+SetActiveWindow(1)
 SetActiveWindow(1)
 setup_plot1()
 set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
 set_view()
 
 SetActiveWindow(2)
+SetActiveWindow(2)
 setup_plot2()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0)
+set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
 set_view()
 
 SetActiveWindow(3)
+SetActiveWindow(3)
 setup_plot3()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=0)
+set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1)
 set_view()
 
 SetActiveWindow(4)
+SetActiveWindow(4)
 setup_plot4()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0)
+set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
 set_view()
+
+sys.stderr.flush()
+sys.stdout.flush()
 
 save_window_matrix()
 delete_plots()
