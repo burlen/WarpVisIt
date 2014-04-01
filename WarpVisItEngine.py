@@ -400,7 +400,9 @@ class WarpVisItEngine:
     def Update(self):
         """Advance the simualtion update plots etc..."""
         pDebug('WarpVisItEngine::AdvanceAndUpdate')
+        # step simulation
         self.StepSimulation()
+        # render
         self.Render()
         if self.__ContinueCallback():
             if not self.__Interactive:
@@ -429,6 +431,7 @@ class WarpVisItEngine:
         pDebug('WarpVisItEngine::Render')
 
         if self.__Interactive:
+            simV2.VisItTimeStepChanged()
 
             if self.__InteractiveRenderScripts:
                 for script in self.__ActiveRenderScriptsCallback():
@@ -439,6 +442,10 @@ class WarpVisItEngine:
                 simV2.VisItUpdatePlots()
 
         else:
+            # pause
+            anyUpdate = len(self.__ActiveRenderScriptsCallback()) > 0
+            if anyUpdate:
+                simV2.VisItTimeStepChanged()
             for script in self.__ActiveRenderScriptsCallback():
                 pDebug('Rendering %s'%(script))
                 simV2.VisItExecuteCommand(self.__RenderScripts[script])
@@ -450,5 +457,4 @@ class WarpVisItEngine:
         i = 0
         while i < self.__StepInterval:
             self.__StepCallback()
-            simV2.VisItTimeStepChanged()
             i += 1

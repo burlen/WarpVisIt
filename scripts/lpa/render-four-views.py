@@ -19,15 +19,15 @@ def set_view():
 
 def setup_plot1():
     sys.stderr.write('=============setup_plot1\n')
-    AddPlot("Pseudocolor", "Electron-0/uz", 1, 1)
+    AddPlot("Pseudocolor", "Electron-0/uz", 1, 0)
     SetActivePlots(0)
     SetActivePlots(0)
-    AddOperator("Project", 1)
+    AddOperator("Project", 0)
     ProjectAtts = ProjectAttributes()
     ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 1)
-    AddOperator("Elevate", 1)
+    AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 1
     ElevateAtts.limitsMode = ElevateAtts.OriginalData  # OriginalData, CurrentPlot
@@ -90,15 +90,14 @@ def setup_plot1():
 
 def setup_plot2():
     sys.stderr.write('=============setup_plot2\n')
-    AddPlot("Pseudocolor", "Electron-0/uy", 1, 1)
+    AddPlot("Pseudocolor", "Electron-0/uy", 1, 0)
     SetActivePlots(0)
-    SetActivePlots(0)
-    AddOperator("Project", 1)
+    AddOperator("Project", 0)
     ProjectAtts = ProjectAttributes()
     ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 1)
-    AddOperator("Elevate", 1)
+    AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 1
     ElevateAtts.limitsMode = ElevateAtts.OriginalData  # OriginalData, CurrentPlot
@@ -161,7 +160,7 @@ def setup_plot2():
 
 def setup_plot3():
     sys.stderr.write('=============setup_plot3\n')
-    AddPlot("Pseudocolor", "Electron-1/uz", 1, 1)
+    AddPlot("Pseudocolor", "Electron-1/uz", 1, 0)
     SetActivePlots(0)
     SetActivePlots(0)
     AddOperator("Project", 1)
@@ -235,8 +234,12 @@ def setup_plot4():
     #########################################
     # elec density                          #
     #########################################
-    AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0", 1, 1)
-    #AddPlot("Pseudocolor", "Electron-0/weights", 1, 1)
+    #AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0", 1, 1)
+    AddPlot("Pseudocolor", "Electron-0/weights", 1, 0)
+    #
+    AddOperator("DataBinning",0)
+    SetActivePlots(0)
+    #
     DataBinningAtts = DataBinningAttributes()
     DataBinningAtts.numDimensions = DataBinningAtts.Two  # One, Two, Three
     DataBinningAtts.dim1BinBasedOn = DataBinningAtts.X  # X, Y, Z, Variable
@@ -282,6 +285,9 @@ def setup_plot4():
     ElevateAtts.zeroFlag = 1
     ElevateAtts.variable = "default"
     SetOperatorOptions(ElevateAtts, 1)
+    #
+    ChangeActivePlotsVar("operators/DataBinning/2D/Electron-0")
+    #
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1

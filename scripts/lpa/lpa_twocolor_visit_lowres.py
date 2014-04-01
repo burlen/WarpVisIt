@@ -103,7 +103,7 @@ def GetActiveRenderScripts():
     The script dictionary is created by LoadRenderScripts.
     """
     scripts = []
-    if ((warp.warp.top.it >= 332) and ((warp.warp.top.it%4)==0)):
+    if ((warp.warp.top.it >= 332) and ((warp.warp.top.it%100)==0)):
       scripts.append('4-view')
     return scripts
 
