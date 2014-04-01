@@ -45,11 +45,11 @@ def setup_plot1():
     PseudocolorAtts.skewFactor = 1
     PseudocolorAtts.limitsMode = PseudocolorAtts.OriginalData  # OriginalData, CurrentPlot
     PseudocolorAtts.minFlag = 1
-    PseudocolorAtts.min = -1e+09
+    PseudocolorAtts.min = -7e+08
     PseudocolorAtts.maxFlag = 1
-    PseudocolorAtts.max = 1e+09
+    PseudocolorAtts.max = 7e+08
     PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
-    PseudocolorAtts.colorTableName = "hot_desaturated"
+    PseudocolorAtts.colorTableName = "hot_and_cold"
     PseudocolorAtts.invertColorTable = 0
     PseudocolorAtts.opacityType = PseudocolorAtts.FullyOpaque  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
     PseudocolorAtts.opacityVariable = ""
@@ -115,11 +115,11 @@ def setup_plot2():
     PseudocolorAtts.skewFactor = 1
     PseudocolorAtts.limitsMode = PseudocolorAtts.OriginalData  # OriginalData, CurrentPlot
     PseudocolorAtts.minFlag = 1
-    PseudocolorAtts.min = -1e+09
+    PseudocolorAtts.min = -7e+08
     PseudocolorAtts.maxFlag = 1
-    PseudocolorAtts.max = 1e+09
+    PseudocolorAtts.max = 7e+08
     PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
-    PseudocolorAtts.colorTableName = "hot_desaturated"
+    PseudocolorAtts.colorTableName = "hot_and_cold"
     PseudocolorAtts.invertColorTable = 0
     PseudocolorAtts.opacityType = PseudocolorAtts.FullyOpaque  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
     PseudocolorAtts.opacityVariable = ""
@@ -190,8 +190,8 @@ def setup_plot3():
     PseudocolorAtts.maxFlag = 0
     PseudocolorAtts.max = 5e+08
     PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
-    PseudocolorAtts.colorTableName = "hot_desaturated"
-    PseudocolorAtts.invertColorTable = 0
+    PseudocolorAtts.colorTableName = "Spectral"
+    PseudocolorAtts.invertColorTable = 1
     PseudocolorAtts.opacityType = PseudocolorAtts.FullyOpaque  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
     PseudocolorAtts.opacityVariable = ""
     PseudocolorAtts.opacity = 1
@@ -264,14 +264,15 @@ def setup_plot4():
     DataBinningAtts.reductionOperator = DataBinningAtts.Sum  # Average, Minimum, Maximum, StandardDeviation, Variance, Sum, Count, RMS, PDF
     DataBinningAtts.varForReduction = "Electron-0/weights"
     DataBinningAtts.emptyVal = 0
-    DataBinningAtts.outputType = DataBinningAtts.OutputOnInputMesh  # OutputOnBins, OutputOnInputMesh
+    #DataBinningAtts.outputType = DataBinningAtts.OutputOnInputMesh  # OutputOnBins, OutputOnInputMesh
+    DataBinningAtts.outputType = DataBinningAtts.OutputOnBins  # OutputOnBins, OutputOnInputMesh
     DataBinningAtts.removeEmptyValFromCurve = 1
     SetOperatorOptions(DataBinningAtts, 1)
-    AddOperator("Project", 1)
-    ProjectAtts = ProjectAttributes()
-    ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
-    ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
-    SetOperatorOptions(ProjectAtts, 1)
+    #AddOperator("Project", 1)
+    #ProjectAtts = ProjectAttributes()
+    #ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
+    #ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
+    #SetOperatorOptions(ProjectAtts, 1)
     AddOperator("Elevate", 1)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 0
@@ -296,12 +297,14 @@ def setup_plot4():
     PseudocolorAtts.min = 0
     PseudocolorAtts.maxFlag = 0
     PseudocolorAtts.max = 1
-    PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
+    #PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
+    PseudocolorAtts.centering = PseudocolorAtts.Nodal  # Natural, Nodal, Zonal
     PseudocolorAtts.colorTableName = "Spectral"
     PseudocolorAtts.invertColorTable = 1
     PseudocolorAtts.opacityType = PseudocolorAtts.Constant  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
     PseudocolorAtts.opacityVariable = ""
-    PseudocolorAtts.opacity = 0.505882
+    #PseudocolorAtts.opacity = 0.505882
+    PseudocolorAtts.opacity = 1.0
     PseudocolorAtts.opacityVarMin = 0
     PseudocolorAtts.opacityVarMax = 1
     PseudocolorAtts.opacityVarMinFlag = 0
@@ -332,7 +335,8 @@ def setup_plot4():
     PseudocolorAtts.renderPoints = 0
     PseudocolorAtts.smoothingLevel = 0
     PseudocolorAtts.legendFlag = 1
-    PseudocolorAtts.lightingFlag = 1
+    #PseudocolorAtts.lightingFlag = 1
+    PseudocolorAtts.lightingFlag = 0
     SetPlotOptions(PseudocolorAtts)
     DrawPlots()
     ##############################################
