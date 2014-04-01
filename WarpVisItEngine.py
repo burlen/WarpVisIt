@@ -71,6 +71,10 @@ def commandCallback(cmd, args, userData):
         sys.exit(0)
         return False
 
+    elif cmd == 'renderEnd':
+        userData.SetVisItRendering(False)
+        return True
+
     pError('Unrecgnozied command %s'%(cmd))
     return False
 
@@ -113,6 +117,7 @@ class WarpVisItEngine:
         self.__VisItUpdates = False
         self.__VisItControl = True
         self.__VisItAbort = False
+        self.__VisItRendering = 0
         self.__Interactive = True
         self.__InteractiveRenderScripts = False
 
@@ -212,6 +217,26 @@ class WarpVisItEngine:
         """Select between interactive/non-interactive simulation stepping"""
         self.__VisItControl = bool(v)
         self.__VisItBlockingComm = bool(v)
+
+    #-------------------------------------------------------------------------
+    def SetVisItRendering(self, v):
+        """
+        Tracks wether we are currently rendering. we need to prevent simulation
+        advances while rendering, else we may mix data from multiple time steps
+        in the same plots. This is strictly for internal use but must be part of
+        public API for use from our callbacks.
+        """
+        if bool(v):
+            self.__VisItRendering += 1
+        else:
+            self.__VisItRendering -= 1
+        if self.__VisItRendering < 0:
+            self.__VisItRendering = 0
+
+    #-------------------------------------------------------------------------
+    def GetVisItRendering(self):
+        """True when VisIt is actively rendering"""
+        return self.__VisItRendering > 0
 
     #-------------------------------------------------------------------------
     def SetSimFile(self, fileName):
@@ -351,6 +376,10 @@ class WarpVisItEngine:
                 return False
 
             elif doUpdate(event):
+                # this is where we can safely do things.
+                # it occurs only when VisIt is not in the
+                # middle of processing its own commands.
+                # see Getting Data Into VisIt Ch.5 p154
                 pDebug('update')
                 if self.Update():
                     continue
@@ -399,10 +428,8 @@ class WarpVisItEngine:
     #-------------------------------------------------------------------------
     def Update(self):
         """Advance the simualtion update plots etc..."""
-        pDebug('WarpVisItEngine::AdvanceAndUpdate')
-        # step simulation
+        pDebug('WarpVisItEngine::Update')
         self.StepSimulation()
-        # render
         self.Render()
         if self.__ContinueCallback():
             if not self.__Interactive:
@@ -430,31 +457,56 @@ class WarpVisItEngine:
         """Render simulation data"""
         pDebug('WarpVisItEngine::Render')
 
-        if self.__Interactive:
-            simV2.VisItTimeStepChanged()
+        # don't attempt to render until last render completes
+        if self.GetVisItRendering():
+            return
 
+        if self.__Interactive:
+            # interactive mode
             if self.__InteractiveRenderScripts:
-                for script in self.__ActiveRenderScriptsCallback():
-                    pDebug('Rendering %s'%(script))
-                    simV2.VisItExecuteCommand(self.__RenderScripts[script])
+                # for testing of batch scripts
+                activeScripts = self.__ActiveRenderScriptsCallback()
+                if len(activeScripts):
+                    # push rendering scripts to cli for execution
+                    # note that we are rendering, while rendering sim must not
+                    # advance
+                    self.SetVisItRendering(True)
+                    for script in activeScripts:
+                        pDebug('Rendering %s'%(script))
+                        self.SetVisItRendering(True)
+                        source = self.__RenderScripts[script]
+                        source += "\nvisit.SendSimulationCommand('localhost', '%s', 'renderEnd')\n"%(self.__SimFile)
+                        simV2.VisItExecuteCommand(source)
 
             if self.__VisItUpdates:
                 simV2.VisItUpdatePlots()
 
         else:
-            # pause
-            anyUpdate = len(self.__ActiveRenderScriptsCallback()) > 0
-            if anyUpdate:
-                simV2.VisItTimeStepChanged()
-            for script in self.__ActiveRenderScriptsCallback():
-                pDebug('Rendering %s'%(script))
-                simV2.VisItExecuteCommand(self.__RenderScripts[script])
+            # batch mode
+            activeScripts = self.__ActiveRenderScriptsCallback()
+            if len(activeScripts):
+                # push rendering scripts to cli for execution
+                # note that we are rendering, while rendering sim must not
+                # advance
+                for script in activeScripts:
+                    pDebug('Rendering %s'%(script))
+                    self.SetVisItRendering(True)
+                    source = self.__RenderScripts[script]
+                    source += "\nvisit.SendSimulationCommand('localhost', '%s', 'renderEnd')\n"%(self.__SimFile)
+                    simV2.VisItExecuteCommand(source)
 
     #-------------------------------------------------------------------------
     def StepSimulation(self):
         """Drive the simulation through one or more steps"""
-        pDebug('WarpVisItEngine::StepSimulation %d'%(self.__StepInterval))
-        i = 0
-        while i < self.__StepInterval:
-            self.__StepCallback()
-            i += 1
+
+        # don't attempt to step until last render completes
+        if self.GetVisItRendering():
+            return
+
+        if self.__StepInterval > 0:
+            pDebug('WarpVisItEngine::StepSimulation %d'%(self.__StepInterval))
+            i = 0
+            while i < self.__StepInterval:
+                self.__StepCallback()
+                i += 1
+            simV2.VisItTimeStepChanged()
