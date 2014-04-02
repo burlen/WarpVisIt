@@ -1,41 +1,84 @@
 from visit import *
 
-def hide_if_empty():
-    sys.stderr.write('=============hide_if_empty\n')
-    np = GetNumPlots()
-    i = 0
-    while(i<np):
-        SetActivePlots(i)
-        SetQueryFloatFormat("%g")
-        SetQueryOutputToValue()
-        numNodes = Query("NumNodes")
-        if numNodes < 10:
-            #HideActivePlots()
-            #DeleteActivePlots()
-            DeleteAllPlots()
-            return True
-        i = i + 1
-    return False
+#----------------------------------------------------------------------------
+def meshPlot(winId,meshName):
+    """VisIt Du gehst mir auf die Eier."""
+    SetActiveWindow(winId)
+    AddPlot('Mesh',meshName)
+    plotId = GetNumPlots()-1
+    clearAnnotations(winId, plotId)
+    DrawPlots()
+    return plotId
 
-def set_view():
-    sys.stderr.write('=============set_view\n')
-    ResetView()
-    View3DAtts = GetView3D()
-    View3DAtts.viewNormal = (0.82, 0.53, 0.25)
-    View3DAtts.viewUp = (-0.19, -0.16, 0.97)
-    SetView3D(View3DAtts)
+#----------------------------------------------------------------------------
+def meshValid(winId,meshName):
+    """VisIt Du gehst mir auf die Eier."""
+    SetActiveWindow(winId)
+    plotId = meshPlot(winId,meshName)
+    valid = not plotEmpty(winId,plotId)
+    SetActivePlots(plotId)
+    DeleteActivePlots()
+    return valid
 
+#----------------------------------------------------------------------------
+def deletePlots(winId):
+    SetActiveWindow(winId)
+    DeleteAllPlots()
+    return
 
-def setup_plot1():
-    sys.stderr.write('=============setup_plot1\n')
+#----------------------------------------------------------------------------
+def clearWindow(winId):
+    """Hari suggested this, doesn't work"""
+    SetActiveWindow(winId)
+    InvertBackgroundColor()
+    InvertBackgroundColor()
+    return
+
+#----------------------------------------------------------------------------
+def plotEmpty(winId, plotId):
+    """check for empty plot by query num nodes"""
+
+    SetActiveWindow(winId)
+    SetActivePlots(plotId)
+
+    SetQueryFloatFormat("%g")
+    SetQueryOutputToValue()
+    numNodes = Query("NumNodes")
+
+    return numNodes<1
+
+#----------------------------------------------------------------------------
+def setView(winId, plotId):
+
+    SetActiveWindow(winId)
+    SetActivePlots(plotId)
+
+    if not plotEmpty(winId, plotId):
+
+        ResetView()
+
+        View3DAtts = GetView3D()
+        View3DAtts.viewNormal = (0.82, 0.53, 0.25)
+        View3DAtts.viewUp = (-0.19, -0.16, 0.97)
+        SetView3D(View3DAtts)
+
+    return
+
+#----------------------------------------------------------------------------
+def plotPColorElec0Uz(winId):
+
+    SetActiveWindow(winId)
+
     AddPlot("Pseudocolor", "Electron-0/uz", 1, 0)
-    SetActivePlots(0)
-    SetActivePlots(0)
+    plotId = GetNumPlots() - 1
+    SetActivePlots(plotId)
+
     AddOperator("Project", 0)
     ProjectAtts = ProjectAttributes()
     ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 1)
+
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 1
@@ -49,6 +92,7 @@ def setup_plot1():
     ElevateAtts.zeroFlag = 0
     ElevateAtts.variable = "Electron-0/uy"
     SetOperatorOptions(ElevateAtts, 1)
+
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -95,17 +139,29 @@ def setup_plot1():
     PseudocolorAtts.legendFlag = 1
     PseudocolorAtts.lightingFlag = 1
     SetPlotOptions(PseudocolorAtts)
-    DrawPlots()
 
-def setup_plot2():
-    sys.stderr.write('=============setup_plot2\n')
+    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+
+    DrawPlots()
+    setView(winId, plotId)
+
+    return plotId
+
+#----------------------------------------------------------------------------
+def plotPColorElec0Uy(winId):
+
+    SetActiveWindow(winId)
+
     AddPlot("Pseudocolor", "Electron-0/uy", 1, 0)
-    SetActivePlots(0)
+    plotId = GetNumPlots() - 1
+    SetActivePlots(plotId)
+
     AddOperator("Project", 0)
     ProjectAtts = ProjectAttributes()
     ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 1)
+
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 1
@@ -119,6 +175,7 @@ def setup_plot2():
     ElevateAtts.zeroFlag = 0
     ElevateAtts.variable = "Electron-0/uz"
     SetOperatorOptions(ElevateAtts, 1)
+
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -165,19 +222,30 @@ def setup_plot2():
     PseudocolorAtts.legendFlag = 1
     PseudocolorAtts.lightingFlag = 1
     SetPlotOptions(PseudocolorAtts)
-    DrawPlots()
 
-def setup_plot3():
-    sys.stderr.write('=============setup_plot3\n')
+    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
+
+    DrawPlots()
+    setView(winId, plotId)
+
+    return plotId
+
+#----------------------------------------------------------------------------
+def plotPColorElec1Uz(winId):
+
+    SetActiveWindow(winId)
+
     AddPlot("Pseudocolor", "Electron-1/uz", 1, 0)
-    SetActivePlots(0)
-    SetActivePlots(0)
-    AddOperator("Project", 1)
+    plotId = GetNumPlots() - 1
+    SetActivePlots(plotId)
+
+    AddOperator("Project", 0)
     ProjectAtts = ProjectAttributes()
     ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
-    SetOperatorOptions(ProjectAtts, 1)
-    AddOperator("Elevate", 1)
+    SetOperatorOptions(ProjectAtts, 0)
+
+    AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 1
     ElevateAtts.limitsMode = ElevateAtts.OriginalData  # OriginalData, CurrentPlot
@@ -189,7 +257,8 @@ def setup_plot3():
     ElevateAtts.max = 5e+08
     ElevateAtts.zeroFlag = 0
     ElevateAtts.variable = "Electron-1/ux"
-    SetOperatorOptions(ElevateAtts, 1)
+    SetOperatorOptions(ElevateAtts, 0)
+
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -236,19 +305,30 @@ def setup_plot3():
     PseudocolorAtts.legendFlag = 1
     PseudocolorAtts.lightingFlag = 1
     SetPlotOptions(PseudocolorAtts)
-    DrawPlots()
 
-def setup_plot4():
-    sys.stderr.write('=============setup_plot4\n')
-    #########################################
-    # elec density                          #
-    #########################################
+    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1)
+
+    DrawPlots()
+    setView(winId, plotId)
+
+    return plotId
+
+#----------------------------------------------------------------------------
+def plotBinElec0Weights(winId, nbx, nbz):
+
+    SetActiveWindow(winId)
+
+    # VisIt complains if we use a variable that doesn't exist
+    # plot the pcolor on a variable that does, fix it later.
     #AddPlot("Pseudocolor", "operators/DataBinning/2D/Electron-0", 1, 1)
     AddPlot("Pseudocolor", "Electron-0/weights", 1, 0)
-    #
+    plotId = GetNumPlots() - 1
+    SetActivePlots(plotId)
+
+    DrawPlots()
+    setView(winId, plotId)
+
     AddOperator("DataBinning",0)
-    SetActivePlots(0)
-    #
     DataBinningAtts = DataBinningAttributes()
     DataBinningAtts.numDimensions = DataBinningAtts.Two  # One, Two, Three
     DataBinningAtts.dim1BinBasedOn = DataBinningAtts.X  # X, Y, Z, Variable
@@ -256,13 +336,13 @@ def setup_plot4():
     DataBinningAtts.dim1SpecifyRange = 0
     DataBinningAtts.dim1MinRange = 0
     DataBinningAtts.dim1MaxRange = 1
-    DataBinningAtts.dim1NumBins = 200
+    DataBinningAtts.dim1NumBins = nbx
     DataBinningAtts.dim2BinBasedOn = DataBinningAtts.Z  # X, Y, Z, Variable
     DataBinningAtts.dim2Var = "default"
     DataBinningAtts.dim2SpecifyRange = 0
     DataBinningAtts.dim2MinRange = 0
     DataBinningAtts.dim2MaxRange = 1
-    DataBinningAtts.dim2NumBins = 400
+    DataBinningAtts.dim2NumBins = nbz
     DataBinningAtts.dim3BinBasedOn = DataBinningAtts.Variable  # X, Y, Z, Variable
     DataBinningAtts.dim3Var = "default"
     DataBinningAtts.dim3SpecifyRange = 0
@@ -276,13 +356,15 @@ def setup_plot4():
     #DataBinningAtts.outputType = DataBinningAtts.OutputOnInputMesh  # OutputOnBins, OutputOnInputMesh
     DataBinningAtts.outputType = DataBinningAtts.OutputOnBins  # OutputOnBins, OutputOnInputMesh
     DataBinningAtts.removeEmptyValFromCurve = 1
-    SetOperatorOptions(DataBinningAtts, 1)
-    #AddOperator("Project", 1)
+    SetOperatorOptions(DataBinningAtts, 0)
+
+    #AddOperator("Project", 0)
     #ProjectAtts = ProjectAttributes()
     #ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     #ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
-    #SetOperatorOptions(ProjectAtts, 1)
-    AddOperator("Elevate", 1)
+    #SetOperatorOptions(ProjectAtts, 0)
+
+    AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 0
     ElevateAtts.limitsMode = ElevateAtts.OriginalData  # OriginalData, CurrentPlot
@@ -294,10 +376,11 @@ def setup_plot4():
     ElevateAtts.max = 1
     ElevateAtts.zeroFlag = 1
     ElevateAtts.variable = "default"
-    SetOperatorOptions(ElevateAtts, 1)
-    #
+    SetOperatorOptions(ElevateAtts, 0)
+
+    # fix pcolor variable
     ChangeActivePlotsVar("operators/DataBinning/2D/Electron-0")
-    #
+
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -347,18 +430,29 @@ def setup_plot4():
     #PseudocolorAtts.lightingFlag = 1
     PseudocolorAtts.lightingFlag = 0
     SetPlotOptions(PseudocolorAtts)
+
     DrawPlots()
-    ##############################################
-    #   ielec uz particles                       #
-    ##############################################
+    setView(winId, plotId)
+
+    return plotId
+
+#----------------------------------------------------------------------------
+def plotPColorElec1XZUz(winId):
+
+    SetActiveWindow(winId)
+
     AddPlot("Pseudocolor", "Electron-1/uz", 1, 0)
+    plotId = GetNumPlots() - 1
+    SetActivePlots(plotId)
+
     AddOperator("Project", 0)
-    SetActivePlots(1)
-    SetActivePlots(1)
     ProjectAtts = ProjectAttributes()
     ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 0)
+
+    DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*5e-14")
+
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
     ElevateAtts.useXYLimits = 0
@@ -372,6 +466,7 @@ def setup_plot4():
     ElevateAtts.zeroFlag = 0
     ElevateAtts.variable = "Electron-1-uz"
     SetOperatorOptions(ElevateAtts, 0)
+
     #AddOperator("Transform", 0)
     #TransformAtts = TransformAttributes()
     #TransformAtts.doRotate = 0
@@ -411,6 +506,7 @@ def setup_plot4():
     #TransformAtts.vectorTransformMethod = TransformAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     #TransformAtts.transformVectors = 1
     #SetOperatorOptions(TransformAtts, 0)
+
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -457,273 +553,134 @@ def setup_plot4():
     PseudocolorAtts.legendFlag = 1
     PseudocolorAtts.lightingFlag = 1
     SetPlotOptions(PseudocolorAtts)
-    DrawPlots()
 
-def set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0):
-    sys.stderr.write('=============set_annotations\n')
-    # Logging for SetAnnotationObjectOptions is not implemented yet.
+    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
+
+    DrawPlots()
+    setView(winId, plotId)
+
+    return plotId
+
+#----------------------------------------------------------------------------
+def clearAnnotations(winId, plotId):
+    SetActiveWindow(winId)
+    SetActivePlots(plotId)
     AnnotationAtts = AnnotationAttributes()
-    AnnotationAtts.axes2D.visible = 1
-    AnnotationAtts.axes2D.autoSetTicks = 1
-    AnnotationAtts.axes2D.autoSetScaling = 1
-    AnnotationAtts.axes2D.lineWidth = 0
+    AnnotationAtts.axes2D.visible = 0
     AnnotationAtts.axes2D.tickLocation = AnnotationAtts.axes2D.Outside  # Inside, Outside, Both
     AnnotationAtts.axes2D.tickAxes = AnnotationAtts.axes2D.BottomLeft  # Off, Bottom, Left, BottomLeft, All
-    AnnotationAtts.axes2D.xAxis.title.visible = 1
     AnnotationAtts.axes2D.xAxis.title.font.font = AnnotationAtts.axes2D.xAxis.title.font.Courier  # Arial, Courier, Times
-    AnnotationAtts.axes2D.xAxis.title.font.scale = 1
-    AnnotationAtts.axes2D.xAxis.title.font.useForegroundColor = 1
-    AnnotationAtts.axes2D.xAxis.title.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes2D.xAxis.title.font.bold = 1
-    AnnotationAtts.axes2D.xAxis.title.font.italic = 1
-    AnnotationAtts.axes2D.xAxis.title.userTitle = 0
-    AnnotationAtts.axes2D.xAxis.title.userUnits = 0
-    AnnotationAtts.axes2D.xAxis.title.title = xAxisName
-    AnnotationAtts.axes2D.xAxis.title.units = ""
-    AnnotationAtts.axes2D.xAxis.label.visible = 1
     AnnotationAtts.axes2D.xAxis.label.font.font = AnnotationAtts.axes2D.xAxis.label.font.Courier  # Arial, Courier, Times
-    AnnotationAtts.axes2D.xAxis.label.font.scale = 1
-    AnnotationAtts.axes2D.xAxis.label.font.useForegroundColor = 1
-    AnnotationAtts.axes2D.xAxis.label.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes2D.xAxis.label.font.bold = 1
-    AnnotationAtts.axes2D.xAxis.label.font.italic = 1
-    AnnotationAtts.axes2D.xAxis.label.scaling = 0
-    AnnotationAtts.axes2D.xAxis.tickMarks.visible = 1
-    AnnotationAtts.axes2D.xAxis.tickMarks.majorMinimum = 0
-    AnnotationAtts.axes2D.xAxis.tickMarks.majorMaximum = 1
-    AnnotationAtts.axes2D.xAxis.tickMarks.minorSpacing = 0.02
-    AnnotationAtts.axes2D.xAxis.tickMarks.majorSpacing = 0.2
-    AnnotationAtts.axes2D.xAxis.grid = 0
-    AnnotationAtts.axes2D.yAxis.title.visible = 1
     AnnotationAtts.axes2D.yAxis.title.font.font = AnnotationAtts.axes2D.yAxis.title.font.Courier  # Arial, Courier, Times
-    AnnotationAtts.axes2D.yAxis.title.font.scale = 1
-    AnnotationAtts.axes2D.yAxis.title.font.useForegroundColor = 1
-    AnnotationAtts.axes2D.yAxis.title.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes2D.yAxis.title.font.bold = 1
-    AnnotationAtts.axes2D.yAxis.title.font.italic = 1
-    AnnotationAtts.axes2D.yAxis.title.userTitle = 0
-    AnnotationAtts.axes2D.yAxis.title.userUnits = 0
-    AnnotationAtts.axes2D.yAxis.title.title = yAxisName
-    AnnotationAtts.axes2D.yAxis.title.units = ""
-    AnnotationAtts.axes2D.yAxis.label.visible = 1
     AnnotationAtts.axes2D.yAxis.label.font.font = AnnotationAtts.axes2D.yAxis.label.font.Courier  # Arial, Courier, Times
-    AnnotationAtts.axes2D.yAxis.label.font.scale = 1
-    AnnotationAtts.axes2D.yAxis.label.font.useForegroundColor = 1
-    AnnotationAtts.axes2D.yAxis.label.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes2D.yAxis.label.font.bold = 1
-    AnnotationAtts.axes2D.yAxis.label.font.italic = 1
-    AnnotationAtts.axes2D.yAxis.label.scaling = 0
-    AnnotationAtts.axes2D.yAxis.tickMarks.visible = 1
-    AnnotationAtts.axes2D.yAxis.tickMarks.majorMinimum = 0
-    AnnotationAtts.axes2D.yAxis.tickMarks.majorMaximum = 1
-    AnnotationAtts.axes2D.yAxis.tickMarks.minorSpacing = 0.02
-    AnnotationAtts.axes2D.yAxis.tickMarks.majorSpacing = 0.2
-    AnnotationAtts.axes2D.yAxis.grid = 0
-    AnnotationAtts.axes3D.visible = 1
-    AnnotationAtts.axes3D.autoSetTicks = 1
-    AnnotationAtts.axes3D.autoSetScaling = 1
-    AnnotationAtts.axes3D.lineWidth = 0
+    AnnotationAtts.axes3D.visible = 0
     AnnotationAtts.axes3D.tickLocation = AnnotationAtts.axes3D.Inside  # Inside, Outside, Both
-    AnnotationAtts.axes3D.axesType = AnnotationAtts.axes3D.OutsideEdges  # ClosestTriad, FurthestTriad, OutsideEdges, StaticTriad, StaticEdges
-    AnnotationAtts.axes3D.triadFlag = 1
+    AnnotationAtts.axes3D.axesType = AnnotationAtts.axes3D.ClosestTriad  # ClosestTriad, FurthestTriad, OutsideEdges, StaticTriad, StaticEdges
+    AnnotationAtts.axes3D.triadFlag = 0
     AnnotationAtts.axes3D.bboxFlag = 0
-    AnnotationAtts.axes3D.xAxis.title.visible = 1
     AnnotationAtts.axes3D.xAxis.title.font.font = AnnotationAtts.axes3D.xAxis.title.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axes3D.xAxis.title.font.scale = 1.2
-    AnnotationAtts.axes3D.xAxis.title.font.useForegroundColor = 1
-    AnnotationAtts.axes3D.xAxis.title.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes3D.xAxis.title.font.bold = 1
-    AnnotationAtts.axes3D.xAxis.title.font.italic = 0
-    AnnotationAtts.axes3D.xAxis.title.userTitle = 1
-    AnnotationAtts.axes3D.xAxis.title.userUnits = 0
-    AnnotationAtts.axes3D.xAxis.title.title = xAxisName
-    AnnotationAtts.axes3D.xAxis.title.units = ""
-    AnnotationAtts.axes3D.xAxis.label.visible = 0
     AnnotationAtts.axes3D.xAxis.label.font.font = AnnotationAtts.axes3D.xAxis.label.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axes3D.xAxis.label.font.scale = 1
-    AnnotationAtts.axes3D.xAxis.label.font.useForegroundColor = 1
-    AnnotationAtts.axes3D.xAxis.label.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes3D.xAxis.label.font.bold = 0
-    AnnotationAtts.axes3D.xAxis.label.font.italic = 0
-    AnnotationAtts.axes3D.xAxis.label.scaling = 0
-    AnnotationAtts.axes3D.xAxis.tickMarks.visible = 1
-    AnnotationAtts.axes3D.xAxis.tickMarks.majorMinimum = 0
-    AnnotationAtts.axes3D.xAxis.tickMarks.majorMaximum = 1
-    AnnotationAtts.axes3D.xAxis.tickMarks.minorSpacing = 0.02
-    AnnotationAtts.axes3D.xAxis.tickMarks.majorSpacing = 0.2
-    AnnotationAtts.axes3D.xAxis.grid = 0
-    AnnotationAtts.axes3D.yAxis.title.visible = 1
     AnnotationAtts.axes3D.yAxis.title.font.font = AnnotationAtts.axes3D.yAxis.title.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axes3D.yAxis.title.font.scale = 1.2
-    AnnotationAtts.axes3D.yAxis.title.font.useForegroundColor = 1
-    AnnotationAtts.axes3D.yAxis.title.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes3D.yAxis.title.font.bold = 1
-    AnnotationAtts.axes3D.yAxis.title.font.italic = 0
-    AnnotationAtts.axes3D.yAxis.title.userTitle = 1
-    AnnotationAtts.axes3D.yAxis.title.userUnits = 0
-    AnnotationAtts.axes3D.yAxis.title.title = yAxisName
-    AnnotationAtts.axes3D.yAxis.title.units = ""
-    AnnotationAtts.axes3D.yAxis.label.visible = 0
     AnnotationAtts.axes3D.yAxis.label.font.font = AnnotationAtts.axes3D.yAxis.label.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axes3D.yAxis.label.font.scale = 1
-    AnnotationAtts.axes3D.yAxis.label.font.useForegroundColor = 1
-    AnnotationAtts.axes3D.yAxis.label.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes3D.yAxis.label.font.bold = 0
-    AnnotationAtts.axes3D.yAxis.label.font.italic = 0
-    AnnotationAtts.axes3D.yAxis.label.scaling = 0
-    AnnotationAtts.axes3D.yAxis.tickMarks.visible = 1
-    AnnotationAtts.axes3D.yAxis.tickMarks.majorMinimum = 0
-    AnnotationAtts.axes3D.yAxis.tickMarks.majorMaximum = 1
-    AnnotationAtts.axes3D.yAxis.tickMarks.minorSpacing = 0.02
-    AnnotationAtts.axes3D.yAxis.tickMarks.majorSpacing = 0.2
-    AnnotationAtts.axes3D.yAxis.grid = 0
-    AnnotationAtts.axes3D.zAxis.title.visible = 1
     AnnotationAtts.axes3D.zAxis.title.font.font = AnnotationAtts.axes3D.zAxis.title.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axes3D.zAxis.title.font.scale = 1.2
-    AnnotationAtts.axes3D.zAxis.title.font.useForegroundColor = 1
-    AnnotationAtts.axes3D.zAxis.title.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes3D.zAxis.title.font.bold = 1
-    AnnotationAtts.axes3D.zAxis.title.font.italic = 0
-    AnnotationAtts.axes3D.zAxis.title.userTitle = 1
-    AnnotationAtts.axes3D.zAxis.title.userUnits = 0
-    AnnotationAtts.axes3D.zAxis.title.title = zAxisName
-    AnnotationAtts.axes3D.zAxis.title.units = ""
-    AnnotationAtts.axes3D.zAxis.label.visible = 0
     AnnotationAtts.axes3D.zAxis.label.font.font = AnnotationAtts.axes3D.zAxis.label.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axes3D.zAxis.label.font.scale = 1
-    AnnotationAtts.axes3D.zAxis.label.font.useForegroundColor = 1
-    AnnotationAtts.axes3D.zAxis.label.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axes3D.zAxis.label.font.bold = 0
-    AnnotationAtts.axes3D.zAxis.label.font.italic = 0
-    AnnotationAtts.axes3D.zAxis.label.scaling = 0
-    AnnotationAtts.axes3D.zAxis.tickMarks.visible = 1
-    AnnotationAtts.axes3D.zAxis.tickMarks.majorMinimum = 0
-    AnnotationAtts.axes3D.zAxis.tickMarks.majorMaximum = 1
-    AnnotationAtts.axes3D.zAxis.tickMarks.minorSpacing = 0.02
-    AnnotationAtts.axes3D.zAxis.tickMarks.majorSpacing = 0.2
-    AnnotationAtts.axes3D.zAxis.grid = 0
-    AnnotationAtts.axes3D.setBBoxLocation = 0
-    AnnotationAtts.axes3D.bboxLocation = (0, 1, 0, 1, 0, 1)
     AnnotationAtts.userInfoFlag = 0
     AnnotationAtts.userInfoFont.font = AnnotationAtts.userInfoFont.Arial  # Arial, Courier, Times
-    AnnotationAtts.userInfoFont.scale = 1
-    AnnotationAtts.userInfoFont.useForegroundColor = 1
-    AnnotationAtts.userInfoFont.color = (0, 0, 0, 255)
-    AnnotationAtts.userInfoFont.bold = 0
-    AnnotationAtts.userInfoFont.italic = 0
-    AnnotationAtts.databaseInfoFlag = showDB
-    AnnotationAtts.timeInfoFlag = 1
+    AnnotationAtts.databaseInfoFlag = 0
     AnnotationAtts.databaseInfoFont.font = AnnotationAtts.databaseInfoFont.Arial  # Arial, Courier, Times
-    AnnotationAtts.databaseInfoFont.scale = 1
-    AnnotationAtts.databaseInfoFont.useForegroundColor = 1
-    AnnotationAtts.databaseInfoFont.color = (0, 0, 0, 255)
-    AnnotationAtts.databaseInfoFont.bold = 0
-    AnnotationAtts.databaseInfoFont.italic = 0
     AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.File  # File, Directory, Full, Smart, SmartDirectory
-    AnnotationAtts.databaseInfoTimeScale = 1
-    AnnotationAtts.databaseInfoTimeOffset = 0
-    AnnotationAtts.legendInfoFlag = 1
-    AnnotationAtts.backgroundColor = (255, 255, 255, 255)
-    AnnotationAtts.foregroundColor = (0, 0, 0, 255)
+    AnnotationAtts.legendInfoFlag = 0
     AnnotationAtts.gradientBackgroundStyle = AnnotationAtts.Radial  # TopToBottom, BottomToTop, LeftToRight, RightToLeft, Radial
-    AnnotationAtts.gradientColor1 = (0, 0, 255, 255)
-    AnnotationAtts.gradientColor2 = (0, 0, 0, 255)
     AnnotationAtts.backgroundMode = AnnotationAtts.Solid  # Solid, Gradient, Image, ImageSphere
-    AnnotationAtts.backgroundImage = ""
-    AnnotationAtts.imageRepeatX = 1
-    AnnotationAtts.imageRepeatY = 1
-    AnnotationAtts.axesArray.visible = 1
-    AnnotationAtts.axesArray.ticksVisible = 1
-    AnnotationAtts.axesArray.autoSetTicks = 1
-    AnnotationAtts.axesArray.autoSetScaling = 1
-    AnnotationAtts.axesArray.lineWidth = 0
-    AnnotationAtts.axesArray.axes.title.visible = 1
     AnnotationAtts.axesArray.axes.title.font.font = AnnotationAtts.axesArray.axes.title.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axesArray.axes.title.font.scale = 1
-    AnnotationAtts.axesArray.axes.title.font.useForegroundColor = 1
-    AnnotationAtts.axesArray.axes.title.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axesArray.axes.title.font.bold = 0
-    AnnotationAtts.axesArray.axes.title.font.italic = 0
-    AnnotationAtts.axesArray.axes.title.userTitle = 0
-    AnnotationAtts.axesArray.axes.title.userUnits = 0
-    AnnotationAtts.axesArray.axes.title.title = ""
-    AnnotationAtts.axesArray.axes.title.units = ""
-    AnnotationAtts.axesArray.axes.label.visible = 1
     AnnotationAtts.axesArray.axes.label.font.font = AnnotationAtts.axesArray.axes.label.font.Arial  # Arial, Courier, Times
-    AnnotationAtts.axesArray.axes.label.font.scale = 1
-    AnnotationAtts.axesArray.axes.label.font.useForegroundColor = 1
-    AnnotationAtts.axesArray.axes.label.font.color = (0, 0, 0, 255)
-    AnnotationAtts.axesArray.axes.label.font.bold = 0
-    AnnotationAtts.axesArray.axes.label.font.italic = 0
-    AnnotationAtts.axesArray.axes.label.scaling = 0
-    AnnotationAtts.axesArray.axes.tickMarks.visible = 1
-    AnnotationAtts.axesArray.axes.tickMarks.majorMinimum = 0
-    AnnotationAtts.axesArray.axes.tickMarks.majorMaximum = 1
-    AnnotationAtts.axesArray.axes.tickMarks.minorSpacing = 0.02
-    AnnotationAtts.axesArray.axes.tickMarks.majorSpacing = 0.2
-    AnnotationAtts.axesArray.axes.grid = 0
     SetAnnotationAttributes(AnnotationAtts)
+    return
 
-def save_window_matrix(omitWin1, omitWin2, omitWin3, omitWin4):
-    sys.stderr.write('=============omit_window_matrix\n')
-    if (omitWin1 and omitWin2 and omitWin3 and omitWin4):
-        return
+#----------------------------------------------------------------------------
+def setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0):
+    SetActiveWindow(winId)
+    SetActivePlots(plotId)
+    AnnotationAtts = AnnotationAttributes()
+    AnnotationAtts.axes2D.tickLocation = AnnotationAtts.axes2D.Outside  # Inside, Outside, Both
+    AnnotationAtts.axes2D.tickAxes = AnnotationAtts.axes2D.BottomLeft  # Off, Bottom, Left, BottomLeft, All
+    AnnotationAtts.axes2D.xAxis.title.font.font = AnnotationAtts.axes2D.xAxis.title.font.Courier  # Arial, Courier, Times
+    AnnotationAtts.axes2D.xAxis.title.title = xAxisName
+    AnnotationAtts.axes2D.xAxis.label.font.font = AnnotationAtts.axes2D.xAxis.label.font.Courier  # Arial, Courier, Times
+    AnnotationAtts.axes2D.yAxis.title.font.font = AnnotationAtts.axes2D.yAxis.title.font.Courier  # Arial, Courier, Times
+    AnnotationAtts.axes2D.yAxis.title.title = yAxisName
+    AnnotationAtts.axes2D.yAxis.label.font.font = AnnotationAtts.axes2D.yAxis.label.font.Courier  # Arial, Courier, Times
+    AnnotationAtts.axes3D.tickLocation = AnnotationAtts.axes3D.Inside  # Inside, Outside, Both
+    AnnotationAtts.axes3D.axesType = AnnotationAtts.axes3D.OutsideEdges  # ClosestTriad, FurthestTriad, OutsideEdges, StaticTriad, StaticEdges
+    AnnotationAtts.axes3D.bboxFlag = 0
+    AnnotationAtts.axes3D.xAxis.title.font.font = AnnotationAtts.axes3D.xAxis.title.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.axes3D.xAxis.title.font.scale = 1.2
+    AnnotationAtts.axes3D.xAxis.title.font.bold = 1
+    AnnotationAtts.axes3D.xAxis.title.userTitle = 1
+    AnnotationAtts.axes3D.xAxis.title.title = xAxisName
+    AnnotationAtts.axes3D.xAxis.label.visible = 0
+    AnnotationAtts.axes3D.xAxis.label.font.font = AnnotationAtts.axes3D.xAxis.label.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.axes3D.yAxis.title.font.font = AnnotationAtts.axes3D.yAxis.title.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.axes3D.yAxis.title.font.scale = 1.2
+    AnnotationAtts.axes3D.yAxis.title.font.bold = 1
+    AnnotationAtts.axes3D.yAxis.title.userTitle = 1
+    AnnotationAtts.axes3D.yAxis.title.title = yAxisName
+    AnnotationAtts.axes3D.yAxis.label.visible = 0
+    AnnotationAtts.axes3D.yAxis.label.font.font = AnnotationAtts.axes3D.yAxis.label.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.axes3D.zAxis.title.font.font = AnnotationAtts.axes3D.zAxis.title.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.axes3D.zAxis.title.font.scale = 1.2
+    AnnotationAtts.axes3D.zAxis.title.font.bold = 1
+    AnnotationAtts.axes3D.zAxis.title.userTitle = 1
+    AnnotationAtts.axes3D.zAxis.title.title = zAxisName
+    AnnotationAtts.axes3D.zAxis.label.visible = 0
+    AnnotationAtts.axes3D.zAxis.label.font.font = AnnotationAtts.axes3D.zAxis.label.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.userInfoFlag = 0
+    AnnotationAtts.userInfoFont.font = AnnotationAtts.userInfoFont.Arial  # Arial, Courier, Times
+    AnnotationAtts.databaseInfoFlag = showDB
+    AnnotationAtts.databaseInfoFont.font = AnnotationAtts.databaseInfoFont.Arial  # Arial, Courier, Times
+    AnnotationAtts.databaseInfoExpansionMode = AnnotationAtts.File  # File, Directory, Full, Smart, SmartDirectory
+    AnnotationAtts.gradientBackgroundStyle = AnnotationAtts.Radial  # TopToBottom, BottomToTop, LeftToRight, RightToLeft, Radial
+    AnnotationAtts.backgroundMode = AnnotationAtts.Solid  # Solid, Gradient, Image, ImageSphere
+    AnnotationAtts.axesArray.axes.title.font.font = AnnotationAtts.axesArray.axes.title.font.Arial  # Arial, Courier, Times
+    AnnotationAtts.axesArray.axes.label.font.font = AnnotationAtts.axesArray.axes.label.font.Arial  # Arial, Courier, Times
+    SetAnnotationAttributes(AnnotationAtts)
+    return
 
-    row = lambda i: (int(i)%2)
-    col = lambda i: (int(i)/2)
+#----------------------------------------------------------------------------
+def saveWindows(imw,imh):
+    nrow=2
+    ncol=2
 
-    x = 0
-    y = 0
-    i = int(0)
-    dx = 1600
-    dy = 1100
+    imw/=ncol
+    imh/=nrow
+
+    row = lambda i: (int(i)/ncol)
+    col = lambda i: (int(i)%ncol)
 
     SaveWindowAtts = SaveWindowAttributes()
 
-    if (not omitWin3):
-        SaveWindowAtts.subWindowAtts.win3.position = (row(i)*dx, col(i)*dy)
-        SaveWindowAtts.subWindowAtts.win3.size = (dx,dy)
-        SaveWindowAtts.subWindowAtts.win3.layer = 0
-        SaveWindowAtts.subWindowAtts.win3.transparency = 0
-        SaveWindowAtts.subWindowAtts.win3.omitWindow = 0
-        i+=1
-    if (not omitWin4):
-        SaveWindowAtts.subWindowAtts.win4.position = (row(i)*dx, col(i)*dy)
-        SaveWindowAtts.subWindowAtts.win4.size = (dx,dy)
-        SaveWindowAtts.subWindowAtts.win4.layer = 0
-        SaveWindowAtts.subWindowAtts.win4.transparency = 0
-        SaveWindowAtts.subWindowAtts.win4.omitWindow = 0
-        i+=1
-    if (not omitWin1):
-        SaveWindowAtts.subWindowAtts.win1.position = (row(i)*dx, col(i)*dy)
-        SaveWindowAtts.subWindowAtts.win1.size = (dx,dy)
-        SaveWindowAtts.subWindowAtts.win1.layer = 0
-        SaveWindowAtts.subWindowAtts.win1.transparency = 0
-        SaveWindowAtts.subWindowAtts.win1.omitWindow = 0
-        i+=1
-    if (not omitWin2):
-        SaveWindowAtts.subWindowAtts.win2.position = (row(i)*dx, col(i)*dy)
-        SaveWindowAtts.subWindowAtts.win2.size = (dx,dy)
-        SaveWindowAtts.subWindowAtts.win2.layer = 0
-        SaveWindowAtts.subWindowAtts.win2.transparency = 0
-        SaveWindowAtts.subWindowAtts.win2.omitWindow = 0
-        i+=1
+    i=0
+    SaveWindowAtts.subWindowAtts.win3.position = (col(i)*imw, row(i)*imh)
+    i+=1
+    SaveWindowAtts.subWindowAtts.win4.position = (col(i)*imw, row(i)*imh)
+    i+=1
+    SaveWindowAtts.subWindowAtts.win1.position = (col(i)*imw, row(i)*imh)
+    i+=1
+    SaveWindowAtts.subWindowAtts.win2.position = (col(i)*imw, row(i)*imh)
+    i+=1
 
-    imw = 1600
-    if (i>0):
-        imw = 3200
-
-    imh = 1100
-    if (i>2):
-        imh = 2200
+    SaveWindowAtts.subWindowAtts.win1.size = (imw,imh)
+    SaveWindowAtts.subWindowAtts.win2.size = (imw,imh)
+    SaveWindowAtts.subWindowAtts.win3.size = (imw,imh)
+    SaveWindowAtts.subWindowAtts.win4.size = (imw,imh)
 
     SaveWindowAtts.outputToCurrentDirectory = 1
     SaveWindowAtts.outputDirectory = "./"
     SaveWindowAtts.fileName = "lpa-4-view"
     SaveWindowAtts.family = 1
     SaveWindowAtts.format = SaveWindowAtts.PNG  # BMP, CURVE, JPEG, OBJ, PNG, POSTSCRIPT, POVRAY, PPM, RGB, STL, TIFF, ULTRA, VTK, PLY
-    SaveWindowAtts.width = imw
-    SaveWindowAtts.height = imh
+    SaveWindowAtts.width = imw*nrow
+    SaveWindowAtts.height = imh*ncol
 
     SaveWindowAtts.screenCapture = 0
     SaveWindowAtts.saveTiled = 0
@@ -737,63 +694,40 @@ def save_window_matrix(omitWin1, omitWin2, omitWin3, omitWin4):
     SaveWindowAtts.advancedMultiWindowSave = 1
 
     SetSaveWindowAttributes(SaveWindowAtts)
+
     SaveWindow()
-
-def delete_plots():
-    SetActiveWindow(1)
-    SetActiveWindow(1)
-    DeleteAllPlots()
-    SetActiveWindow(2)
-    SetActiveWindow(2)
-    DeleteAllPlots()
-    SetActiveWindow(3)
-    SetActiveWindow(3)
-    DeleteAllPlots()
-    SetActiveWindow(4)
-    SetActiveWindow(4)
-    DeleteAllPlots()
+    return
 
 
-#SendSimulationCommand('localhost', simFile, 'pause')
+# do the vis!
+SetWindowLayout(1)
+elec0 = meshValid(1,'Electron-0')
+elec1 = meshValid(1,'Electron-1')
+
 SetWindowLayout(4)
-delete_plots()
-#SetWindowLayout(1)
-#SetWindowLayout(4)
+i=1
+while i<=4:
+    deletePlots(i)
+    i+=1
 
-SetActiveWindow(1)
-SetActiveWindow(1)
-setup_plot1()
-omitWin1 = hide_if_empty()
-if (not omitWin1):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
-    set_view()
+if elec0:
+    plotPColorElec0Uz(1)
+    plotPColorElec0Uy(2)
+    plotBinElec0Weights(4,200,400)
+else:
+    meshPlot(1,'Electron-0')
+    meshPlot(2,'Electron-0')
+    meshPlot(4,'Electron-0')
 
-SetActiveWindow(2)
-SetActiveWindow(2)
-setup_plot2()
-omitWin2 = hide_if_empty()
-if (not omitWin2):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
-    set_view()
+if elec1:
+    plotPColorElec1Uz(3)
+    plotPColorElec1XZUz(4)
+else:
+    meshPlot(3,'Electron-1')
 
-SetActiveWindow(3)
-SetActiveWindow(3)
-setup_plot3()
-omitWin3 = hide_if_empty()
-if (not omitWin3):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1)
-    set_view()
+saveWindows(1920,1080)
 
-SetActiveWindow(4)
-SetActiveWindow(4)
-DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*5e-14")
-setup_plot4()
-omitWin4 = hide_if_empty()
-if (not omitWin4):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
-    set_view()
-
-sys.stderr.flush()
-
-save_window_matrix(omitWin1, omitWin2, omitWin3, omitWin4)
-delete_plots()
+i=1
+while i<=4:
+    deletePlots(i)
+    i+=1
