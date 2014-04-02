@@ -786,7 +786,7 @@ if (not omitWin3):
 
 SetActiveWindow(4)
 SetActiveWindow(4)
-DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*1e-13")
+DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*5e-14")
 setup_plot4()
 omitWin4 = hide_if_empty()
 if (not omitWin4):
