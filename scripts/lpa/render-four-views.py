@@ -2,11 +2,20 @@ from visit import *
 
 def hide_if_empty():
     sys.stderr.write('=============hide_if_empty\n')
-    SetQueryFloatFormat("%g")
-    SetQueryOutputToValue()
-    numNodes = Query("NumNodes")
-    if numNodes < 10:
-        HideActivePlots()
+    np = GetNumPlots()
+    i = 0
+    while(i<np):
+        SetActivePlots(i)
+        SetQueryFloatFormat("%g")
+        SetQueryOutputToValue()
+        numNodes = Query("NumNodes")
+        if numNodes < 10:
+            #HideActivePlots()
+            #DeleteActivePlots()
+            DeleteAllPlots()
+            return True
+        i = i + 1
+    return False
 
 def set_view():
     sys.stderr.write('=============set_view\n')
@@ -655,16 +664,67 @@ def set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0):
     AnnotationAtts.axesArray.axes.grid = 0
     SetAnnotationAttributes(AnnotationAtts)
 
-def save_window_matrix():
-    sys.stderr.write('=============save_window_matrix\n')
+def save_window_matrix(omitWin1, omitWin2, omitWin3, omitWin4):
+    sys.stderr.write('=============omit_window_matrix\n')
+    if (omitWin1 and omitWin2 and omitWin3 and omitWin4):
+        return
+
+    row = lambda i: (int(i)%2)
+    col = lambda i: (int(i)/2)
+
+    x = 0
+    y = 0
+    i = int(0)
+    dx = 1600
+    dy = 1100
+
     SaveWindowAtts = SaveWindowAttributes()
-    SaveWindowAtts.outputToCurrentDirectory = 0
+
+    if (not omitWin3):
+        SaveWindowAtts.subWindowAtts.win3.position = (row(i)*dx, col(i)*dy)
+        SaveWindowAtts.subWindowAtts.win3.size = (dx,dy)
+        SaveWindowAtts.subWindowAtts.win3.layer = 0
+        SaveWindowAtts.subWindowAtts.win3.transparency = 0
+        SaveWindowAtts.subWindowAtts.win3.omitWindow = 0
+        i+=1
+    if (not omitWin4):
+        SaveWindowAtts.subWindowAtts.win4.position = (row(i)*dx, col(i)*dy)
+        SaveWindowAtts.subWindowAtts.win4.size = (dx,dy)
+        SaveWindowAtts.subWindowAtts.win4.layer = 0
+        SaveWindowAtts.subWindowAtts.win4.transparency = 0
+        SaveWindowAtts.subWindowAtts.win4.omitWindow = 0
+        i+=1
+    if (not omitWin1):
+        SaveWindowAtts.subWindowAtts.win1.position = (row(i)*dx, col(i)*dy)
+        SaveWindowAtts.subWindowAtts.win1.size = (dx,dy)
+        SaveWindowAtts.subWindowAtts.win1.layer = 0
+        SaveWindowAtts.subWindowAtts.win1.transparency = 0
+        SaveWindowAtts.subWindowAtts.win1.omitWindow = 0
+        i+=1
+    if (not omitWin2):
+        SaveWindowAtts.subWindowAtts.win2.position = (row(i)*dx, col(i)*dy)
+        SaveWindowAtts.subWindowAtts.win2.size = (dx,dy)
+        SaveWindowAtts.subWindowAtts.win2.layer = 0
+        SaveWindowAtts.subWindowAtts.win2.transparency = 0
+        SaveWindowAtts.subWindowAtts.win2.omitWindow = 0
+        i+=1
+
+    imw = 1600
+    if (i>0):
+        imw = 3200
+
+    imh = 1100
+    if (i>2):
+        imh = 2200
+
+    SaveWindowAtts.outputToCurrentDirectory = 1
     SaveWindowAtts.outputDirectory = "./"
     SaveWindowAtts.fileName = "lpa-4-view"
     SaveWindowAtts.family = 1
     SaveWindowAtts.format = SaveWindowAtts.PNG  # BMP, CURVE, JPEG, OBJ, PNG, POSTSCRIPT, POVRAY, PPM, RGB, STL, TIFF, ULTRA, VTK, PLY
-    SaveWindowAtts.width = 3200
-    SaveWindowAtts.height = 2200
+    SaveWindowAtts.width = imw
+    SaveWindowAtts.height = imh
+
     SaveWindowAtts.screenCapture = 0
     SaveWindowAtts.saveTiled = 0
     SaveWindowAtts.quality = 80
@@ -675,86 +735,7 @@ def save_window_matrix():
     SaveWindowAtts.forceMerge = 0
     SaveWindowAtts.resConstraint = SaveWindowAtts.NoConstraint  # NoConstraint, EqualWidthHeight, ScreenProportions
     SaveWindowAtts.advancedMultiWindowSave = 1
-    SaveWindowAtts.subWindowAtts.win1.position = (0, 1100)
-    SaveWindowAtts.subWindowAtts.win1.size = (1600, 1100)
-    SaveWindowAtts.subWindowAtts.win1.layer = 0
-    SaveWindowAtts.subWindowAtts.win1.transparency = 0
-    SaveWindowAtts.subWindowAtts.win1.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win2.position = (1600, 1100)
-    SaveWindowAtts.subWindowAtts.win2.size = (1600, 1100)
-    SaveWindowAtts.subWindowAtts.win2.layer = 0
-    SaveWindowAtts.subWindowAtts.win2.transparency = 0
-    SaveWindowAtts.subWindowAtts.win2.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win3.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win3.size = (1600, 1100)
-    SaveWindowAtts.subWindowAtts.win3.layer = 0
-    SaveWindowAtts.subWindowAtts.win3.transparency = 0
-    SaveWindowAtts.subWindowAtts.win3.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win4.position = (1600, 0)
-    SaveWindowAtts.subWindowAtts.win4.size = (1600, 1100)
-    SaveWindowAtts.subWindowAtts.win4.layer = 0
-    SaveWindowAtts.subWindowAtts.win4.transparency = 0
-    SaveWindowAtts.subWindowAtts.win4.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win5.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win5.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win5.layer = 0
-    SaveWindowAtts.subWindowAtts.win5.transparency = 0
-    SaveWindowAtts.subWindowAtts.win5.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win6.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win6.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win6.layer = 0
-    SaveWindowAtts.subWindowAtts.win6.transparency = 0
-    SaveWindowAtts.subWindowAtts.win6.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win7.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win7.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win7.layer = 0
-    SaveWindowAtts.subWindowAtts.win7.transparency = 0
-    SaveWindowAtts.subWindowAtts.win7.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win8.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win8.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win8.layer = 0
-    SaveWindowAtts.subWindowAtts.win8.transparency = 0
-    SaveWindowAtts.subWindowAtts.win8.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win9.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win9.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win9.layer = 0
-    SaveWindowAtts.subWindowAtts.win9.transparency = 0
-    SaveWindowAtts.subWindowAtts.win9.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win10.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win10.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win10.layer = 0
-    SaveWindowAtts.subWindowAtts.win10.transparency = 0
-    SaveWindowAtts.subWindowAtts.win10.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win11.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win11.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win11.layer = 0
-    SaveWindowAtts.subWindowAtts.win11.transparency = 0
-    SaveWindowAtts.subWindowAtts.win11.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win12.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win12.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win12.layer = 0
-    SaveWindowAtts.subWindowAtts.win12.transparency = 0
-    SaveWindowAtts.subWindowAtts.win12.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win13.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win13.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win13.layer = 0
-    SaveWindowAtts.subWindowAtts.win13.transparency = 0
-    SaveWindowAtts.subWindowAtts.win13.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win14.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win14.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win14.layer = 0
-    SaveWindowAtts.subWindowAtts.win14.transparency = 0
-    SaveWindowAtts.subWindowAtts.win14.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win15.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win15.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win15.layer = 0
-    SaveWindowAtts.subWindowAtts.win15.transparency = 0
-    SaveWindowAtts.subWindowAtts.win15.omitWindow = 0
-    SaveWindowAtts.subWindowAtts.win16.position = (0, 0)
-    SaveWindowAtts.subWindowAtts.win16.size = (128, 128)
-    SaveWindowAtts.subWindowAtts.win16.layer = 0
-    SaveWindowAtts.subWindowAtts.win16.transparency = 0
-    SaveWindowAtts.subWindowAtts.win16.omitWindow = 0
+
     SetSaveWindowAttributes(SaveWindowAtts)
     SaveWindow()
 
@@ -782,29 +763,36 @@ delete_plots()
 SetActiveWindow(1)
 SetActiveWindow(1)
 setup_plot1()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
-set_view()
+omitWin1 = hide_if_empty()
+if (not omitWin1):
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_view()
 
 SetActiveWindow(2)
 SetActiveWindow(2)
 setup_plot2()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
-set_view()
+omitWin2 = hide_if_empty()
+if (not omitWin2):
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_view()
 
 SetActiveWindow(3)
 SetActiveWindow(3)
 setup_plot3()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1)
-set_view()
+omitWin3 = hide_if_empty()
+if (not omitWin3):
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_view()
 
 SetActiveWindow(4)
 SetActiveWindow(4)
 setup_plot4()
-set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
-set_view()
+omitWin4 = hide_if_empty()
+if (not omitWin4):
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_view()
 
 sys.stderr.flush()
-sys.stdout.flush()
 
-save_window_matrix()
+save_window_matrix(omitWin1, omitWin2, omitWin3, omitWin4)
 delete_plots()

@@ -103,7 +103,7 @@ def GetActiveRenderScripts():
     The script dictionary is created by LoadRenderScripts.
     """
     scripts = []
-    if ((warp.warp.top.it >= 332) and ((warp.warp.top.it%100)==0)):
+    if ((warp.warp.top.it >= 332) and ((warp.warp.top.it%10)==0)):
       scripts.append('4-view')
     return scripts
 
@@ -1008,6 +1008,7 @@ def Initialize():
     if (len(warp.listofallspecies) < 1):
         raise RuntimeError('no particle species!')
 
-    warp.step(1300)
+    #warp.step(1300)
+    warp.step(332)
     print 'initialization complete'
     return
