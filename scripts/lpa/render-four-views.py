@@ -431,6 +431,8 @@ def plotBinElec0Weights(winId, nbx, nbz):
     PseudocolorAtts.lightingFlag = 0
     SetPlotOptions(PseudocolorAtts)
 
+    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='', showDB=1)
+
     DrawPlots()
     setView(winId, plotId)
 
@@ -451,7 +453,7 @@ def plotPColorElec1XZUz(winId):
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 0)
 
-    DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*5e-14")
+    DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*1e-14")
 
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
