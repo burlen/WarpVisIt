@@ -302,10 +302,10 @@ def setup_plot4():
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
     PseudocolorAtts.limitsMode = PseudocolorAtts.OriginalData  # OriginalData, CurrentPlot
-    PseudocolorAtts.minFlag = 0
+    PseudocolorAtts.minFlag = 1
     PseudocolorAtts.min = 0
-    PseudocolorAtts.maxFlag = 0
-    PseudocolorAtts.max = 1
+    PseudocolorAtts.maxFlag = 1
+    PseudocolorAtts.max = 6e11
     #PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
     PseudocolorAtts.centering = PseudocolorAtts.Nodal  # Natural, Nodal, Zonal
     PseudocolorAtts.colorTableName = "Spectral"
@@ -361,7 +361,7 @@ def setup_plot4():
     SetOperatorOptions(ProjectAtts, 0)
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
-    ElevateAtts.useXYLimits = 1
+    ElevateAtts.useXYLimits = 0
     ElevateAtts.limitsMode = ElevateAtts.OriginalData  # OriginalData, CurrentPlot
     ElevateAtts.scaling = ElevateAtts.Linear  # Linear, Log, Skew
     ElevateAtts.skewFactor = 1
@@ -370,47 +370,47 @@ def setup_plot4():
     ElevateAtts.maxFlag = 0
     ElevateAtts.max = 7e+08
     ElevateAtts.zeroFlag = 0
-    ElevateAtts.variable = "default"
+    ElevateAtts.variable = "Electron-1-uz"
     SetOperatorOptions(ElevateAtts, 0)
-    AddOperator("Transform", 0)
-    TransformAtts = TransformAttributes()
-    TransformAtts.doRotate = 0
-    TransformAtts.rotateOrigin = (0, 0, 0)
-    TransformAtts.rotateAxis = (0, 0, 1)
-    TransformAtts.rotateAmount = 0
-    TransformAtts.rotateType = TransformAtts.Deg  # Deg, Rad
-    TransformAtts.doScale = 1
-    TransformAtts.scaleOrigin = (0, 0, 0)
-    TransformAtts.scaleX = 1
-    TransformAtts.scaleY = 1
-    TransformAtts.scaleZ = 10
-    TransformAtts.doTranslate = 0
-    TransformAtts.translateX = 0
-    TransformAtts.translateY = 0
-    TransformAtts.translateZ = 0
-    TransformAtts.transformType = TransformAtts.Similarity  # Similarity, Coordinate, Linear
-    TransformAtts.inputCoordSys = TransformAtts.Cartesian  # Cartesian, Cylindrical, Spherical
-    TransformAtts.outputCoordSys = TransformAtts.Spherical  # Cartesian, Cylindrical, Spherical
-    TransformAtts.m00 = 1
-    TransformAtts.m01 = 0
-    TransformAtts.m02 = 0
-    TransformAtts.m03 = 0
-    TransformAtts.m10 = 0
-    TransformAtts.m11 = 1
-    TransformAtts.m12 = 0
-    TransformAtts.m13 = 0
-    TransformAtts.m20 = 0
-    TransformAtts.m21 = 0
-    TransformAtts.m22 = 1
-    TransformAtts.m23 = 0
-    TransformAtts.m30 = 0
-    TransformAtts.m31 = 0
-    TransformAtts.m32 = 0
-    TransformAtts.m33 = 1
-    TransformAtts.invertLinearTransform = 0
-    TransformAtts.vectorTransformMethod = TransformAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
-    TransformAtts.transformVectors = 1
-    SetOperatorOptions(TransformAtts, 0)
+    #AddOperator("Transform", 0)
+    #TransformAtts = TransformAttributes()
+    #TransformAtts.doRotate = 0
+    #TransformAtts.rotateOrigin = (0, 0, 0)
+    #TransformAtts.rotateAxis = (0, 0, 1)
+    #TransformAtts.rotateAmount = 0
+    #TransformAtts.rotateType = TransformAtts.Deg  # Deg, Rad
+    #TransformAtts.doScale = 1
+    #TransformAtts.scaleOrigin = (0, 0, 0)
+    #TransformAtts.scaleX = 1
+    #TransformAtts.scaleY = 1
+    #TransformAtts.scaleZ = 10
+    #TransformAtts.doTranslate = 0
+    #TransformAtts.translateX = 0
+    #TransformAtts.translateY = 0
+    #TransformAtts.translateZ = 0
+    #TransformAtts.transformType = TransformAtts.Similarity  # Similarity, Coordinate, Linear
+    #TransformAtts.inputCoordSys = TransformAtts.Cartesian  # Cartesian, Cylindrical, Spherical
+    #TransformAtts.outputCoordSys = TransformAtts.Spherical  # Cartesian, Cylindrical, Spherical
+    #TransformAtts.m00 = 1
+    #TransformAtts.m01 = 0
+    #TransformAtts.m02 = 0
+    #TransformAtts.m03 = 0
+    #TransformAtts.m10 = 0
+    #TransformAtts.m11 = 1
+    #TransformAtts.m12 = 0
+    #TransformAtts.m13 = 0
+    #TransformAtts.m20 = 0
+    #TransformAtts.m21 = 0
+    #TransformAtts.m22 = 1
+    #TransformAtts.m23 = 0
+    #TransformAtts.m30 = 0
+    #TransformAtts.m31 = 0
+    #TransformAtts.m32 = 0
+    #TransformAtts.m33 = 1
+    #TransformAtts.invertLinearTransform = 0
+    #TransformAtts.vectorTransformMethod = TransformAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
+    #TransformAtts.transformVectors = 1
+    #SetOperatorOptions(TransformAtts, 0)
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
     PseudocolorAtts.skewFactor = 1
@@ -786,6 +786,7 @@ if (not omitWin3):
 
 SetActiveWindow(4)
 SetActiveWindow(4)
+DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*1e-13")
 setup_plot4()
 omitWin4 = hide_if_empty()
 if (not omitWin4):
