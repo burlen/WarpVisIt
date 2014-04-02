@@ -773,7 +773,7 @@ SetActiveWindow(2)
 setup_plot2()
 omitWin2 = hide_if_empty()
 if (not omitWin2):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
     set_view()
 
 SetActiveWindow(3)
@@ -781,7 +781,7 @@ SetActiveWindow(3)
 setup_plot3()
 omitWin3 = hide_if_empty()
 if (not omitWin3):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1)
     set_view()
 
 SetActiveWindow(4)
@@ -789,7 +789,7 @@ SetActiveWindow(4)
 setup_plot4()
 omitWin4 = hide_if_empty()
 if (not omitWin4):
-    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uy', showDB=1)
+    set_annotations(xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=1)
     set_view()
 
 sys.stderr.flush()
