@@ -71,7 +71,7 @@ laser_duration1=None
 laser_risetime1=None
 
 # for edison runs
-bigRun = True
+bigRun = False
 #1)
 #   1.1)  dtcoef = 0.25/4 instead of (which I believe means we have finer time stepping)
 #   1.2)  nx =1200 (i.e, 6 times higher transverse grid resolution)
@@ -116,8 +116,16 @@ def GetActiveRenderScripts():
     list is empty then nothing will be rendered this time step.
     The script dictionary is created by LoadRenderScripts.
     """
+    global bigRun
     scripts = []
-    if ((warp.warp.top.it >= 10) and ((warp.warp.top.it%10)==0)):
+    if bigRun:
+        start = 80000
+        freq = 500
+    else:
+        start = 100
+        freq = 100
+
+    if ((warp.warp.top.it >= start) and ((warp.warp.top.it%freq)==0)):
       scripts.append('4-view')
     return scripts
 
@@ -132,7 +140,7 @@ def Continue():
     Return False when the simulation should no longer run.
     """
     # adjust this to take as many steps as you need
-    return warp.warp.top.it <= 3001*280
+    return warp.warp.top.it <= 300000
 
 
 #-----------------------------------------------------------------------------
@@ -1038,5 +1046,10 @@ def Initialize():
 
     #warp.step(1300)
     #warp.step(332)
+    if bigRun:
+        warp.step(80000)
+    #else:
+    #    warp.step()
+
     print 'initialization complete'
     return
