@@ -11,13 +11,15 @@ def pDebug(msg):
     #tstr = time.strftime("%H:%M:%S", time.gmtime())
     #sys.stderr.write('=====: %d %s %s \n'%(parallel.get_rank(), tstr, msg))
     #sys.stderr.flush()
-    pass
+    return
 
 #-----------------------------------------------------------------------------
 def pError(msg):
     """print an error message to stderr"""
-    sys.stderr.write('Error: %d %s\n'%(parallel.get_rank(), msg))
+    tstr = time.strftime("%H:%M:%S", time.gmtime())
+    sys.stderr.write('Error: %d %s %s\n'%(parallel.get_rank(), tstr, msg))
     sys.stderr.flush()
+    return
 
 #-----------------------------------------------------------------------------
 class VisItEnv:
