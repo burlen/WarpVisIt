@@ -71,7 +71,7 @@ laser_duration1=None
 laser_risetime1=None
 
 # for edison runs
-bigRun = False
+bigRun = True
 #1)
 #   1.1)  dtcoef = 0.25/4 instead of (which I believe means we have finer time stepping)
 #   1.2)  nx =1200 (i.e, 6 times higher transverse grid resolution)
@@ -119,20 +119,28 @@ def GetActiveRenderScripts():
     global bigRun
     scripts = []
     if bigRun:
-        start = 80000
-        freq = 500
+        if ((warp.warp.top.it <= 100000) and ((warp.warp.top.it%5000)==0)):
+            scripts.append('4-view')
+        elif ((warp.warp.top.it > 100000) and ((warp.warp.top.it%500)==0)):
+            scripts.append('4-view')
     else:
         start = 100
         freq = 100
-
-    if ((warp.warp.top.it >= start) and ((warp.warp.top.it%freq)==0)):
-      scripts.append('4-view')
+        if ((warp.warp.top.it >= start) and ((warp.warp.top.it%freq)==0)):
+            scripts.append('4-view')
     return scripts
 
 #-----------------------------------------------------------------------------
 def Advance():
     """Advance the simulation one time step."""
-    warp.step()
+    global bigRun
+    if bigRun:
+        if warp.warp.top.it <= 100000:
+            warp.step(1000)
+        else:
+            warp.step(100)
+    else:
+        warp.step(100)
 
 #-----------------------------------------------------------------------------
 def Continue():
@@ -140,7 +148,11 @@ def Continue():
     Return False when the simulation should no longer run.
     """
     # adjust this to take as many steps as you need
-    return warp.warp.top.it <= 300000
+    global bigRun
+    if bigRun:
+        return warp.warp.top.it <= 300000
+    else:
+        return warp.warp.top.it <= 10000
 
 
 #-----------------------------------------------------------------------------
@@ -1044,12 +1056,10 @@ def Initialize():
     if (len(warp.listofallspecies) < 1):
         raise RuntimeError('no particle species!')
 
-    #warp.step(1300)
-    #warp.step(332)
     if bigRun:
-        warp.step(80000)
-    #else:
-    #    warp.step()
+        warp.step(1000)
+    else:
+        warp.step(100)
 
     print 'initialization complete'
     return
