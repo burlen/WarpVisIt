@@ -1,6 +1,6 @@
 #PBS -S /bin/bash
-#PBS -q regular
-#PBS -l mppwidth=1008
+#PBS -q debug
+#PBS -l mppwidth=48
 #PBS -l walltime=00:30:00
 #PBS -N WarpVisIt
 #PBS -j oe
@@ -19,4 +19,4 @@ echo "WARPVISIT_HOME=$WARPVISIT_HOME"
 echo "VISIT_HOME=$VISIT_HOME"
 echo "WARP_HOME=$WARPHOME"
 
-${WARPVISIT_HOME}/WarpVisIt.sh -np=504 --mpiexec=aprun --warpvisit-install=${WARPVISIT_HOME} --warp-script=${WARPVISIT_HOME}/scripts/lpa/lpa-two-color.py --visit-install=${VISIT_HOME} --sim2-file=`pwd`/lpa2.sim2 --script-dir=${WARPVISIT_HOME}/scripts/lpa
+${WARPVISIT_HOME}/WarpVisIt.sh -np=24 --mpiexec="aprun -S 6 -N 12" --warpvisit-install=${WARPVISIT_HOME} --warp-script=${WARPVISIT_HOME}/scripts/lpa/lpa-two-color.py --visit-install=${VISIT_HOME} --sim2-file=`pwd`/lpa2.sim2 --script-dir=${WARPVISIT_HOME}/scripts/lpa --cli
