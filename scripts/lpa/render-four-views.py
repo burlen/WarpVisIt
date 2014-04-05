@@ -15,10 +15,14 @@ def meshValid(winId,meshName):
     """VisIt Du gehst mir auf die Eier."""
     SetActiveWindow(winId)
     plotId = meshPlot(winId,meshName)
-    valid = not plotEmpty(winId,plotId)
+    SetActivePlots(plotId)
+    SetQueryFloatFormat("%g")
+    SetQueryOutputToValue()
+    numNodes = Query("NumNodes")
+    sys.stderr.write('%s has %g nodes\n'%(meshName,numNodes))
     SetActivePlots(plotId)
     DeleteActivePlots()
-    return valid
+    return numNodes>0
 
 #----------------------------------------------------------------------------
 def deletePlots(winId):
@@ -45,6 +49,8 @@ def plotEmpty(winId, plotId):
     SetQueryOutputToValue()
     numNodes = Query("NumNodes")
 
+    sys.stderr.write('NumNodes=%g'%(numNodes))
+
     return numNodes<1
 
 #----------------------------------------------------------------------------
@@ -53,14 +59,12 @@ def setView(winId, plotId):
     SetActiveWindow(winId)
     SetActivePlots(plotId)
 
-    if not plotEmpty(winId, plotId):
+    ResetView()
 
-        ResetView()
-
-        View3DAtts = GetView3D()
-        View3DAtts.viewNormal = (0.82, 0.53, 0.25)
-        View3DAtts.viewUp = (-0.19, -0.16, 0.97)
-        SetView3D(View3DAtts)
+    View3DAtts = GetView3D()
+    View3DAtts.viewNormal = (0.82, 0.53, 0.25)
+    View3DAtts.viewUp = (-0.19, -0.16, 0.97)
+    SetView3D(View3DAtts)
 
     return
 
@@ -728,6 +732,9 @@ else:
     meshPlot(3,'Electron-1')
 
 saveWindows(1920,1080)
+
+SetQueryOutputToValue()
+sys.stderr.write('VisItMemUse = %s\n'%(str(Query("Memory Usage"))))
 
 i=1
 while i<=4:
