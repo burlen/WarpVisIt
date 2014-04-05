@@ -3,12 +3,13 @@ import os
 import sys
 import imp
 import getopt
+import time
 from WarpVisItUtil import VisItEnv
 env = VisItEnv()
 from WarpVisItUtil import pError
 from WarpVisItUtil import pDebug
 from WarpVisItEngine import WarpVisItEngine
-from WarpVisItCLI import WarpVisItCLI
+from WarpVisItCLI import WarpVisItCLI, CLIMain
 
 #-----------------------------------------------------------------------------
 def main(warpScriptFileName='', simFileName='', scriptRoot='',
@@ -39,6 +40,7 @@ def main(warpScriptFileName='', simFileName='', scriptRoot='',
     engine.SetActiveRenderScriptsCallback(warpScript.GetActiveRenderScripts)
     engine.SetRenderScripts(warpScript.LoadRenderScripts(scriptRoot))
     engine.Initalize()
+    #engine.Initalize(viewerOpts=['-nowin','-debug','1'],engineOpts='-debug 1')
 
     # the engine now runs until either the desired number of
     # steps is reached, or the cli tells him to stop.
@@ -58,10 +60,11 @@ if __name__ == "__main__":
     simFile = os.path.abspath(os.getenv('WARPVISIT_SIM2_FILE'))
     scriptRoot = os.getenv('WARPVISIT_SCRIPT_DIR')
     interactive = bool(os.getenv('WARPVISIT_INTERACTIVE'))
+    cli = bool(os.getenv('WARPVISIT_CLI'))
 
     # then command line arguments
     opts, args = getopt.getopt(sys.argv,'',
-        ['help','warp-script=','script-dir=','sim-file=','interactive='])
+        ['help','warp-script=','script-dir=','sim-file=','interactive','cli'])
 
     for opt, arg in opts:
         if opt == '--warp-script':
@@ -70,8 +73,10 @@ if __name__ == "__main__":
             scriptRoot = arg
         elif opt == '--sim-file':
             simFile = os.path.abspath(arg)
-        elif interactive == '--interactive':
+        elif opt == '--interactive':
             interactive = bool(arg)
+        elif opt == '--cli':
+            cli = bool(arg)
         else:
             sys.stderr.write(
                 """
@@ -80,14 +85,16 @@ if __name__ == "__main__":
                     --script-dir  : WARPVISIT_SCRIPT_DIR  : optional
                     --sim-file    : WARPVISIT_SIM2_FILE   : optional
                     --interactive : WARPVISIT_INTERACTIVE : optional
+                    --cli         : WARPVISIT_CLI         : optional
                 """)
             sys.exit(0)
 
     # then validate
-    if not warpScript:
+    if not cli and not warpScript:
         pError('WARP_SCRIPT environment variable was not set.')
         sys.exit(-1)
-    if not os.path.isfile(warpScript):
+
+    if not cli and not os.path.isfile(warpScript):
         pError('The file WARP_SCRIPT points to (%s) was not found'%warpScript)
         sys.exit(-1)
 
@@ -95,6 +102,37 @@ if __name__ == "__main__":
         pError('The path SCRIPT_DIR points to (%s) was not found'%scriptRoot)
         sys.exit(-1)
 
-    # finally run with it
-    status = main(warpScript, simFile, scriptRoot, interactive)
-    sys.exit(status)
+    if not cli and not simFile:
+        pError('running a CLI and no SIM2_FILE was given.')
+        sys.exit(-1)
+
+    # finally start
+    if cli:
+        # CLI/viewer
+        timeout = 1000
+        simFileFound=False
+        n = timeout/10
+        i = 0
+        while i<n:
+            if os.path.isfile(simFile):
+                simFileFound=True
+                sys.stderr.write('found %s'%(simFile))
+                break
+            else:
+                sys.stderr.write('.')
+                time.sleep(10)
+            i += 1
+        sys.stderr.write('\n')
+
+        if simFileFound:
+            status = CLIMain(simFile)
+        else:
+            sys.stderr.write('Error: failed to find %s'%(simFile))
+            status = -1
+
+        sys.exit(status)
+
+    else:
+        # engine/simulation
+        status = main(warpScript, simFile, scriptRoot, interactive)
+        sys.exit(status)

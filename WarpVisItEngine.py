@@ -259,7 +259,7 @@ class WarpVisItEngine:
 
     #-------------------------------------------------------------------------
     def Initalize(self, simName='Warp', simComment=None, simPath=None,
-        traceFile=None, visitOpts=''):
+        traceFile=None, engineOpts='', viewerOpts=['-nowin']):
         """
         Perform the initial setup of VisIt to include the libsim module
         with the simulation.
@@ -279,8 +279,8 @@ class WarpVisItEngine:
             simV2.VisItOpenTraceFile(traceFile)
             self.__HasTrace = True
 
-        if visitOpts:
-            simV2.VisItSetOptions(visitOpts);
+        if engineOpts:
+            simV2.VisItSetOptions(engineOpts);
 
         if self.__CommRank == 0:
             if not simV2.VisItInitializeSocketAndDumpSimFile(
@@ -292,11 +292,11 @@ class WarpVisItEngine:
                   self.__SimFile):
                 pError('VisItInitializeSocketAndDumpSimFile failed')
 
-        if not self.__Interactive:
+        if 0  and not self.__Interactive:
             pDebug('intializing CLI')
             cli = WarpVisItCLI()
             cli.SetSimFile(self.GetSimFile())
-            cli.Initialize()
+            cli.Initialize(args=viewerOpts)
 
         return
 

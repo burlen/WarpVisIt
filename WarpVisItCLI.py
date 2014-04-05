@@ -4,6 +4,7 @@ import parallel
 import multiprocessing
 from visit import visit
 import os
+import time
 
 #-----------------------------------------------------------------------------
 class WarpVisItCLI:
@@ -44,7 +45,7 @@ class WarpVisItCLI:
             # it's in a separate process, this is VisIt's design.
             self.__CLIProc = multiprocessing.Process(
                   target=CLIMain,
-                  args=(self.__SimFile, args))
+                  args=(self.__SimFile, args, True))
             self.__CLIProc.daemon = True
             self.__CLIProc.start()
         return True
@@ -57,23 +58,33 @@ class WarpVisItCLI:
         return
 
 #-----------------------------------------------------------------------------
-def CLIMain(simFile, args=[]):
+def CLIMain(simFile, args=['-nowin'], subProc=False):
     """
     This is the CLI main loop. The CLI resides in a separate process.
     """
     from WarpVisItUtil import pDebug
     from WarpVisItUtil import pError
     from visit import visit
-    import socket
+    import sys
+    import os
 
-    # Were actually in the CLI, here is where we start the viewer
+    # redirect stderr/out to a file so we can see if/what
+    # went wrong
+    if subProc:
+        sys.stdout = open('WarpVisItCLI' + str(os.getpid()) + '.oe', 'w')
+        sys.stderr = sys.stdout
+
+    # this process becomes the CLI. here is where we start the viewer
     # process. yes another process.
     for arg in args:
         visit.AddArgument(arg)
-    visit.Launch()
-    visit.OpenDatabase(simFile)
 
-    while 1:
+    #visit.SetDebugLevel('1')
+    visit.Launch()
+    ok = visit.OpenDatabase(simFile)
+
+    while ok:
+        time.sleep(500)
         pass
         # keep this process alive.
 

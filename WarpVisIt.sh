@@ -1,5 +1,5 @@
 #!/bin/bash
-NUM_PROCS=1
+NUM_PROCS=
 MPI_EXEC=mpiexec
 # get the command line arguments
 for i in "$@"
@@ -78,6 +78,14 @@ do
             GDB=1
             ;;
 
+        --massif)
+            MASSIF=1
+            ;;
+
+        --cli)
+            CLI=1
+            ;;
+
         --help)
             echo
             echo "Usage..."
@@ -86,9 +94,12 @@ do
             echo "    --warp-script       : Warp python code to configure the run"
             echo "    --visit-install     : path to the VisIt install directory"
             echo "    --warpvisit-install : path to the WarpVisIt install directory"
-            echo "    --sim2-file         : where the run should place the sim2 file (optional)"
-            echo "    --script-dir        : where to find user supplied scripts (optional)"
-            echo "    --interactive       : wait for connection to WarpisIt from the VisIt GUI(optional)"
+            echo "    --sim2-file         : where the run should place the sim2 file"
+            echo "    --script-dir        : where to find user supplied scripts"
+            echo "    --interactive       : wait for connection to WarpisIt from the VisIt GUI"
+            echo "    --gdb               : run the program in gdb"
+            echo "    --cli               : start a VisIt CLI process"
+            echo "    --massif            : profile using massif"
             echo
             exit
             ;;
@@ -103,7 +114,7 @@ do
 done
 
 # validate and set defaults
-if [[ -z "$WARPVISIT_WARP_SCRIPT" ]]
+if [[ -z "$WARPVISIT_CLI" && -z "$WARPVISIT_WARP_SCRIPT" ]]
 then
     echo
     echo "ERROR: --warp-script=... is a manditory argument."
@@ -111,6 +122,22 @@ then
     echo
     exit
 fi
+
+if [[ -n "$WARPVISIT_CLI" && -z "$WARPVISIT_SIM2_FILE" ]]
+then
+    echo
+    echo "ERROR: --sim2-file=... is a manditory argument with --cli."
+    echo "       use --help to show usage info."
+    echo
+    exit
+fi
+
+if [[ -e "$WARPVISIT_SIM2_FILE" ]]
+then
+    echo "WARNING: Found sim2 file named $WARPVISIT_SIM2_FILE. deleting it."
+    rm $WARPVISIT_SIM2_FILE
+fi
+
 
 if [[ -z "$WARPVISIT_INSTALL" ]]
 then
@@ -136,7 +163,17 @@ then
 fi
 
 # start the run
-if [[ $NUM_PROCS < 2 ]]
+if [[ -n "$CLI" ]]
+then
+    echo -n "starting cli..."
+    export WARPVISIT_CLI=1
+    python ${WARPVISIT_INSTALL}/WarpVisItMain.py &
+    CLI_PID=$!
+    echo $CLI_PID
+    trap "echo stopping cli $CLI_PID...; kill $CLI_PID; exit;" SIGHUP SIGINT SIGTERM EXIT
+    unset WARPVISIT_CLI
+fi
+if [[ -z "$NUM_PROCS" ]]
 then
     echo "starting serial run..."
     if [[ $GDB -eq 1 ]]
@@ -144,6 +181,11 @@ then
         echo "starting gdb..."
         echo "run WarpVisItMain.py"
         gdb python
+    elif [[ $MASSIF -eq 1 ]]
+    then
+        echo "starting with massif..."
+        valgrind --tool=massif python ${WARPVISIT_INSTALL}/WarpVisItMain.py
+
     else
         python ${WARPVISIT_INSTALL}/WarpVisItMain.py
     fi
