@@ -5,6 +5,7 @@ import simV2
 from WarpVisItUtil import pError
 from WarpVisItUtil import pDebug
 
+
 # VisIt has a nice feature that if you use
 # / in a variable name you can construct nested
 # menus and organize variables by mesh. However
@@ -193,9 +194,9 @@ def getMesh(domain, name, userData):
     pMeshNames = getParticleMeshNames()
     if pMeshNames.count(name) > 0:
         species = getSpecies(name)
-        xvd = passParticleData(species.getx(gather=0))
-        yvd = passParticleData(species.gety(gather=0))
-        zvd = passParticleData(species.getz(gather=0))
+        xvd = passParticleData(species.getx(gather=0), getDataOwner())
+        yvd = passParticleData(species.gety(gather=0), getDataOwner())
+        zvd = passParticleData(species.getz(gather=0), getDataOwner())
 
         if (not (valid(xvd) and valid(yvd) and valid(zvd))):
             pDebug('failed to pass particle locations')
@@ -338,7 +339,7 @@ def getVar(domain, varid, userData):
                 del rank
                 return vd
             getFunc = getattr(species,'get' + varname)
-            return passParticleData(getFunc(gather=0))
+            return passParticleData(getFunc(gather=0), getDataOwner())
 
         # grided data
         elif meshname == 'grid':
@@ -605,3 +606,17 @@ def getSpecies(meshName):
     else:
         pError('Could not find species for mesh %s'%(meshName))
     return None
+
+#-----------------------------------------------------------------------------
+def getDataOwner():
+    """
+    Returns owner of the data, for zero copy must be OWNER_VISIT_EX, or OWNER_SIM
+    if the owner is OWNER_COPY then a copy is immediately made.
+    """
+    safe = 0
+    if safe == 2:
+        return simV2.VISIT_OWNER_COPY
+    elif safe == 1:
+        return simV2.VISIT_OWNER_VISIT_EX
+    else:
+        return simV2.VISIT_OWNER_SIM
