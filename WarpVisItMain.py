@@ -8,8 +8,8 @@ from WarpVisItUtil import VisItEnv
 env = VisItEnv()
 from WarpVisItUtil import pError
 from WarpVisItUtil import pDebug
-from WarpVisItEngine import WarpVisItEngine
-from WarpVisItCLI import WarpVisItCLI, CLIMain
+#from WarpVisItEngine import WarpVisItEngine
+#from WarpVisItCLI import WarpVisItCLI, CLIMain
 
 #-----------------------------------------------------------------------------
 def main(warpScriptFileName='', simFileName='', scriptRoot='',
@@ -22,6 +22,7 @@ def main(warpScriptFileName='', simFileName='', scriptRoot='',
         scriptRoot -- a path to where scripts can be found (optional)
         interactive -- a flag indicating interactive or headless run (optional)
     """
+    from WarpVisItEngine import WarpVisItEngine
     pDebug('main %s %s %s %s'%(
         warpScriptFileName, simFileName, scriptRoot, str(interactive)))
 
@@ -109,6 +110,7 @@ if __name__ == "__main__":
     # finally start
     if cli:
         # CLI/viewer
+        from WarpVisItCLI import WarpVisItCLI, CLIMain
         timeout = 1000
         simFileFound=False
         n = timeout/10
