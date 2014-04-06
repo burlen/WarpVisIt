@@ -119,7 +119,7 @@ def GetActiveRenderScripts():
     global bigRun
     scripts = []
     if bigRun:
-        if ((warp.warp.top.it <= 100000) and ((warp.warp.top.it%5000)==0)):
+        if ((warp.warp.top.it <= 100000) and ((warp.warp.top.it%10000)==0)):
             scripts.append('4-view')
         elif ((warp.warp.top.it > 100000) and ((warp.warp.top.it%500)==0)):
             scripts.append('4-view')
