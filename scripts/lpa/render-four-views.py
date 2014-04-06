@@ -734,7 +734,8 @@ else:
 saveWindows(1920,1080)
 
 SetQueryOutputToValue()
-sys.stderr.write('VisItMemUse = %s\n'%(str(Query("Memory Usage"))))
+memUse = Query("Memory Usage")
+sys.stderr.write('VisItMemUse = [%g %g]\n'%(min(memUse), max(memUse)))
 
 i=1
 while i<=4:
