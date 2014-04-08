@@ -82,6 +82,10 @@ do
             MASSIF=1
             ;;
 
+        --memcheck)
+            MEMCHECK=1
+            ;;
+
         --cli)
             CLI=1
             ;;
@@ -100,6 +104,7 @@ do
             echo "    --gdb               : run the program in gdb"
             echo "    --cli               : start a VisIt CLI process"
             echo "    --massif            : profile using massif"
+            echo "    --memcheck          : profile using memcheck"
             echo
             exit
             ;;
@@ -185,6 +190,11 @@ then
     then
         echo "starting with massif..."
         valgrind --tool=massif python ${WARPVISIT_INSTALL}/WarpVisItMain.py
+
+    elif [[ $MEMCHECK -eq 1 ]]
+    then
+        echo "starting with memcheck..."
+        valgrind --tool=memcheck --leak-check=full --show-reachable=yes --log-file=memcheck.log python ${WARPVISIT_INSTALL}/WarpVisItMain.py
 
     else
         python ${WARPVISIT_INSTALL}/WarpVisItMain.py
