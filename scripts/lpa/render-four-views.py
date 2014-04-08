@@ -735,7 +735,17 @@ saveWindows(1920,1080)
 
 SetQueryOutputToValue()
 memUse = Query("Memory Usage")
-sys.stderr.write('VisItMemUse = [%g %g]\n'%(min(memUse), max(memUse)))
+
+try:
+    memUse = sorted(memUse)
+    n = len(memUse)
+    if n%2 == 0:
+        medMem = (memUse[n/2] + memUse[n/2-1])/2.0
+    else:
+        medMem = memUse[n/2+1]
+    sys.stderr.write('VisItMemUse = [%g %g %g]\n'%(min(memUse), medMem, max(memUse)))
+except:
+    sys.stderr.write('VisItMemUse = %g\n'%(memUse))
 
 i=1
 while i<=4:
