@@ -1,17 +1,75 @@
 import os
 import sys
+import argparse
 import math
 import numpy
+import warpoptions
+warpoptions.lskipoptions = 1
 import warp
 import em3dsolver
-import tunnel_ionization
 import boosted_frame
 import species
 import PRpickle as PR
 import PWpickle as PW
+from WarpVisItSimulation import WarpVisItSimulation
 
+#----------------------------------------------------------------------------
+def NewWarpVisItSimulation(args=[]):
+    """
+    factory that creates an obect implementing WarpVisItSimulation
+    class interface
+    """
+    return LPATwoColorSimulation(args)
+
+#----------------------------------------------------------------------------
+class LPATwoColorSimulation(WarpVisItSimulation):
+    """
+    Implementation of the WarpVisItSimulation class for two color
+    lpa sim example.
+    """
+    def __init__(self,args=[]):
+        global bigRun
+        # parse command line args
+        self.bigRun = False
+
+        # parse command line args
+        ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='LPATwoColorSimulation',add_help=False)
+        ap.add_argument('--big-run',default=self.bigRun,action='store_true')
+        opts = vars(ap.parse_known_args(args)[0])
+        self.bigRun = opts['big_run']
+        bigRun = self.bigRun
+
+        # call base class constructor
+        WarpVisItSimulation.__init__(self,args)
+
+        # setup vis scripts
+        self.AddRenderScript('4Views','render-four-views.py')
+        return
+
+    #------------------------------------------------------------------------
+    def Initialize(self):
+        """
+        Setup IC and start the simulation.
+        """
+        # call scientist provided script to intialize warp
+        initlpa()
+
+        # call default implementation
+        WarpVisItSimulation.Initialize(self)
+
+        print 'initialization complete'
+        return
+
+
+# ---------------------------------------------------------------------------
+# helper functions
+# ---------------------------------------------------------------------------
 #Declare global variables used in various setup functions. The variables are
 #initalized in the Initalize function
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+import tunnel_ionization
+
 zstart0=None
 zpos=None
 xp0=None
@@ -69,98 +127,7 @@ laser_total_length1=None
 Eamp1=None
 laser_duration1=None
 laser_risetime1=None
-
-# for edison runs
-bigRun = True
-#1)
-#   1.1)  dtcoef = 0.25/4 instead of (which I believe means we have finer time stepping)
-#   1.2)  nx =1200 (i.e, 6 times higher transverse grid resolution)
-#   1.3)  nzplambda =60 (which should also be related to higher grid resolution
-#2) Change:
-#    return [0,E1*sin(angle1)] #Ey
-#    #return [E1*sin(angle1),0] #Ex
-#to
-#    #return [0,E1*sin(angle1)] #Ey
-#    return [E1*sin(angle1),0] #Ex
-#
-
-#-----------------------------------------------------------------------------
-def LoadRenderScripts(scriptRoot):
-    """
-    This function returns a dictionary of rendering scripts
-    whose key is a descriptive string. This dictionary will
-    be used when our Render function returns a list of scripts
-    to run. the scriptRoot argument gives the path numpy.where scripts
-    are stored.
-    """
-    # user supplied rendering scripts
-    # script names (keys) are used by the Render funciton
-    # to select the desired script
-    renderingScripts = {
-        '4-view' : 'render-four-views.py'
-        }
-
-    for key,fileName in renderingScripts.iteritems():
-        f = open(os.path.join(scriptRoot,fileName))
-        code = f.read()
-        f.close()
-        renderingScripts[key] = code
-
-    return renderingScripts
-
-#-----------------------------------------------------------------------------
-def GetActiveRenderScripts():
-    """
-    If the current time step should be visualized return a list
-    of keys naming which rendering scripts should run. If the
-    list is empty then nothing will be rendered this time step.
-    The script dictionary is created by LoadRenderScripts.
-    """
-    global bigRun
-    scripts = []
-    if bigRun:
-        if ((warp.warp.top.it <= 100000) and ((warp.warp.top.it%10000)==0)):
-            scripts.append('4-view')
-        elif ((warp.warp.top.it > 100000) and ((warp.warp.top.it%500)==0)):
-            scripts.append('4-view')
-    else:
-        start = 100
-        freq = 100
-        if ((warp.warp.top.it >= start) and ((warp.warp.top.it%freq)==0)):
-            scripts.append('4-view')
-    return scripts
-
-#-----------------------------------------------------------------------------
-def Advance():
-    """Advance the simulation one time step."""
-    global bigRun
-    if bigRun:
-        if warp.warp.top.it <= 100000:
-            warp.step(1000)
-        else:
-            warp.step(100)
-    else:
-        warp.step(100)
-
-#-----------------------------------------------------------------------------
-def Continue():
-    """
-    Return False when the simulation should no longer run.
-    """
-    # adjust this to take as many steps as you need
-    global bigRun
-    if bigRun:
-        return warp.warp.top.it <= 300000
-    else:
-        return warp.warp.top.it <= 10000
-
-
-#-----------------------------------------------------------------------------
-def Finalize():
-    """
-    shutdown the simulation, cleanup etc.
-    """
-    pass
+bigRun = None
 
 def plasma_trans_profile(r):
     global max_diff_density, max_radius, max_parab_radius, norm_diff_density
@@ -214,41 +181,41 @@ def pldens():
 
 # --- defines subroutine injecting plasma
 def loadplasma():
- global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, betafrm, Lplasma, zstart_plasma, zstart_ions, ions, dim, rp0, elec , prot, ions
- while(zpos>=zstart0 and (zpos+betafrm*warp.clight*warp.top.time<Lplasma)):
-    z0 = zstart0+zp0
-    # --- sets ramp by adjusting weight
-    zi = z0+betafrm*warp.clight*warp.top.time
-    # --- get electrons weight factor
-    we = plasma_long_profile(wp0,zi,zstart_plasma)
-    # --- get ions weight factor
-    wi = ions_long_profile(wp0,zi,zstart_ions)
-    # --- set protons weight factor
-    wp = we-wi*(ions[0].charge/warp.echarge)
-    if dim<>'1d':wp*=plasma_trans_profile(rp0)
-    # --- sets velocity
-    vx = 0.#001*warp.clight*ranf(dz)
-    vy = 0.#001*warp.clight*ranf(dz)
-    vz = -betafrm*warp.clight#+0.001*warp.clight*ranf(dz)
-    # --- sets positions
-    x = xp0.copy()
-    y = yp0.copy()
-    z = z0.copy()
-    if any(wp)>0.:
-      # --- inject electrons
-      elec.addpart(x=x,y=y,z=z,vx=vx,vy=vy,vz=vz,w=we,lallindomain=False)
-      prot.addpart(x=x,y=y,z=z,vx=vx,vy=vy,vz=vz,w=wp,lallindomain=False)
-      if any(wi)>0.:
-        # --- inject ions at same locations
-        ions[0].addpart(x=x,y=y,z=z,vx=vx,vy=vy,vz=vz,w=wi,lallindomain=False)
-    ladd=1
-    zstart0+=warp.w3d.dz
- if l_moving_window:
-#    zpos+=top.vbeamfrm*top.dt
-    zpos+=warp.clight*warp.top.dt # was not tested for a long time; is this correct?
- else:
-    zpos+=warp.clight*warp.top.dt # was not tested for a long time; is this correct?
- zstart0-=betafrm*warp.clight*warp.top.dt
+  global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, betafrm, Lplasma, zstart_plasma, zstart_ions, ions, dim, rp0, elec , prot, ions
+  while(zpos>=zstart0 and (zpos+betafrm*warp.clight*warp.top.time<Lplasma)):
+     z0 = zstart0+zp0
+     # --- sets ramp by adjusting weight
+     zi = z0+betafrm*warp.clight*warp.top.time
+     # --- get electrons weight factor
+     we = plasma_long_profile(wp0,zi,zstart_plasma)
+     # --- get ions weight factor
+     wi = ions_long_profile(wp0,zi,zstart_ions)
+     # --- set protons weight factor
+     wp = we-wi*(ions[0].charge/warp.echarge)
+     if dim<>'1d':wp*=plasma_trans_profile(rp0)
+     # --- sets velocity
+     vx = 0.#001*warp.clight*ranf(dz)
+     vy = 0.#001*warp.clight*ranf(dz)
+     vz = -betafrm*warp.clight#+0.001*warp.clight*ranf(dz)
+     # --- sets positions
+     x = xp0.copy()
+     y = yp0.copy()
+     z = z0.copy()
+     if any(wp)>0.:
+       # --- inject electrons
+       elec.addpart(x=x,y=y,z=z,vx=vx,vy=vy,vz=vz,w=we,lallindomain=False)
+       prot.addpart(x=x,y=y,z=z,vx=vx,vy=vy,vz=vz,w=wp,lallindomain=False)
+       if any(wi)>0.:
+         # --- inject ions at same locations
+         ions[0].addpart(x=x,y=y,z=z,vx=vx,vy=vy,vz=vz,w=wi,lallindomain=False)
+     ladd=1
+     zstart0+=warp.w3d.dz
+  if l_moving_window:
+ #    zpos+=top.vbeamfrm*top.dt
+     zpos+=warp.clight*warp.top.dt # was not tested for a long time; is this correct?
+  else:
+     zpos+=warp.clight*warp.top.dt # was not tested for a long time; is this correct?
+  zstart0-=betafrm*warp.clight*warp.top.dt
 
 def laser_amplitude(time):
     global laser_total_length,Eamp,laser_duration,laser_risetime
@@ -322,63 +289,11 @@ def add_external_laser():
     warp.top.pgroup.bx[il:iu] += bx1
     warp.top.pgroup.by[il:iu] += by1
 
-def liveplots():
-  global live_plot_freq, dim
-  if warp.top.it%live_plot_freq==0:
-     #save_field_data()
-     save_emittance()
-     window(0)
-     if l_test:fma()
-    #nz=500
-    #d = (ions[1].get_density(nz=nz)+ions[2].get_density(nz=nz))/dens0
-    #d=ions[1].get_density(nz=nz)/dens_ions
-    #dz=(warp.w3d.zmmax-warp.w3d.zmmin)/nz
-    #z=warp.w3d.zmmin+numpy.arange(nz+1)*dz
-    #plsys(3);pla(d,z/lambda_laser,color=blue)
-    #z=warp.w3d.zmmin+numpy.arange(warp.w3d.nz+1)*warp.w3d.dz
-    #pla((bhist[1,:]),z/lambda_laser,color=red)
-    #pla(d,z/lambda_laser,color=blue)
-    #pzxey(view=3,msize=1)
-    #pzxex(view=4,msize=1)
-    #pzxez(view=5,msize=1)
-    #plke(view=6)
-    #plez(10)
-     if dim=="1d":
-       plex(14)
-       pldens1d(15)
-       plzuz(16)
-     else:
- #      plex(14)
- #      pldenlineout(15)
-       plex2d(3)
-#       plez(4)
-       plex2dwake(5)
-  #     pldens(6)
-       plzuz(6)
-     if not l_test:fma()
-     window(1)
-#     plex(3)
-     pldenlineout(4)
-     if dim<>"1d":
-       pldens(5)
-     plspectrum(6)
-     if not l_test:fma()
-     window(2)
-     plex_x_z(3)
-     plx_z_ex(4)
-     plxux(5)
-    # plx_z_ex_p(6)
-     if l_test:
-       refresh()
-     else:
-       fma()
 
-
-#-----------------------------------------------------------------------------
-def Initialize():
-    """
-    Setup IC and start the simulation, but don't run it yet.
-    """
+#----------------------------------------------------------------------------
+# main initialization function
+#----------------------------------------------------------------------------
+def initlpa():
     global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, diagnosticsScript, laser_total_length,Eamp,laser_duration,laser_risetime, laser_waist, laser_amplitude,laser_phase,laser_profile,k0,w0, vg, max_diff_density, max_radius, max_parab_radius, norm_diff_density, betafrm, Lplasma, zstart_plasma, zstart_ions, length_pramp, length_pramp_exit, length_iramp, Lions, length_iramp_exit, dens_ions, dens0, ions, rp0, zstart_laser, em, laser_radius, laser_radius1, live_plot_freq, elec , prot, ions, zstart_laser1, zstart_ions_lab, Tstart_laser1, laser_amplitude1, laser_phase1, laser_profile1, k1, w1, ZR1, laser_total_length1, Eamp1,laser_duration1, laser_risetime1
     global bigRun
 
@@ -407,7 +322,7 @@ def Initialize():
     dpi=100                     # graphics resolution
     l_test             = 0      # Will open output window on screen
                                 # and stop before entering main loop.
-    l_gist             = 1      # Turns gist plotting on/off
+    l_gist             = 0      # Turns gist plotting on/off
     l_restart          = False  # To restart simulation from an old run (works?)
     restart_dump       = ""     # dump file to restart from (works?)
     l_moving_window    = 1      # on/off (Galilean) moving window
@@ -1047,6 +962,7 @@ def Initialize():
     #if enableWarpLivePlots :
     #    installafterstep(liveplots)
 
+    # print species
     i=0
     warp.listofallspecies = species.listofallspecies
     for s in warp.listofallspecies:
@@ -1055,11 +971,3 @@ def Initialize():
 
     if (len(warp.listofallspecies) < 1):
         raise RuntimeError('no particle species!')
-
-    if bigRun:
-        warp.step(1000)
-    else:
-        warp.step(100)
-
-    print 'initialization complete'
-    return

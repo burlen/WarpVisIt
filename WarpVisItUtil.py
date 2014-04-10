@@ -4,6 +4,17 @@ import parallel
 import time
 
 #-----------------------------------------------------------------------------
+def pStatus(msg):
+    """
+    Rank 0 prints the message to sderr
+    """
+    if parallel.get_rank() == 0:
+        tstr = time.strftime("%H:%M:%S", time.gmtime())
+        sys.stderr.write('=====: %d %s %s \n'%(parallel.get_rank(), tstr, msg))
+        sys.stderr.flush()
+    return
+
+#-----------------------------------------------------------------------------
 def pDebug(msg):
     """
     Print an debug message to stderr (if the following line is not commented)
@@ -22,6 +33,18 @@ def pError(msg):
     return
 
 #-----------------------------------------------------------------------------
+def getEnvVar(name, retType=str, defaultVal=None):
+    """
+    Get the environmant variable and cast to the desired
+    type otherwise return the default value
+    """
+    var = os.getenv(name)
+    if var:
+        return retType(var)
+    else:
+        return defaultVal
+
+##############################################################################
 class VisItEnv:
     """
     Scrape the runtime environment for VISITARCH and

@@ -167,7 +167,7 @@ def getMetaData(userData):
         simV2.VisIt_SimulationMetaData_addVariable(simmd, vmd)
 
     # commands
-    for cmd in ['step','run','continue','pause','kill']:
+    for cmd in ['step','run','continue','pause','end','disconnect']:
         cmdmd = simV2.VisIt_CommandMetaData_alloc()
         if not valid(cmdmd):
             pError('VisIt_CommandMetaData_alloc failed')
@@ -593,8 +593,8 @@ def getParticleMeshNames():
     """Get list of particle meshes from warp"""
     meshNames = []
     speciesEnum = {}
-    for specie in warp.listofallspecies:
-        meshNames.append(getParticleMeshName(specie, speciesEnum))
+    for species in warp.listofallspecies:
+        meshNames.append(getParticleMeshName(species, speciesEnum))
     return meshNames
 
 #-----------------------------------------------------------------------------
