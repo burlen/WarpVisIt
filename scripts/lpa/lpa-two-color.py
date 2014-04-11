@@ -12,6 +12,7 @@ import species
 import PRpickle as PR
 import PWpickle as PW
 from WarpVisItSimulation import WarpVisItSimulation
+from WarpVisItFilteredSpecies import WarpVisItFilteredSpecies
 
 #----------------------------------------------------------------------------
 def NewWarpVisItSimulation(args=[]):
@@ -962,12 +963,54 @@ def initlpa():
     #if enableWarpLivePlots :
     #    installafterstep(liveplots)
 
+    # make it visible to visit
+    warp.listofallspecies = species.listofallspecies
+
+    # add filtered species for ionized electrons
+    # for now it should be at index 2...
+    f = WarpVisItFilteredSpecies(warp.listofallspecies[2],haloFilter,'halo')
+    warp.listofallspecies.append(f)
+
     # print species
     i=0
-    warp.listofallspecies = species.listofallspecies
     for s in warp.listofallspecies:
         print 'species %d %s %s'%(i,s.type.name,str(s.name))
         i += 1
 
     if (len(warp.listofallspecies) < 1):
         raise RuntimeError('no particle species!')
+
+    return
+
+
+#----------------------------------------------------------------------------
+def haloFilter(x,y,z,ux,uy,uz):
+    from parallel import globalvar,globalave
+    from numpy import sqrt,shape,take,arange,compress,abs
+    import sys
+    # get rms values
+    xrms = sqrt(globalvar(x))
+    yrms = sqrt(globalvar(y))
+    zrms = sqrt(globalvar(z))
+    uxrms = sqrt(globalvar(ux))
+    uyrms = sqrt(globalvar(uy))
+    uzrms = sqrt(globalvar(uz))
+    # get average values
+    xave=globalave(x)
+    yave=globalave(y)
+    zave=globalave(z)
+    uxave=globalave(ux)
+    uyave=globalave(uy)
+    uzave=globalave(uz)
+    n=shape(x)[0]
+    #sys.stderr.write('rms = %g %g %g %g %g %g\nave = %g %g %g %g %g %g\nn=%d\n'%(xrms,yrms,zrms,uxrms,uyrms,uzrms,xave,yave,zave,uxave,uyave,uzave,n))
+    # get indices of particles inside 3*rms in 6-D phase-space
+    ii=compress((abs(x-xave)<3*xrms) & \
+                (abs(y-yave)<3*yrms) & \
+                (abs(z-zave)<3*zrms) & \
+                (abs(ux-uxave)<3*uxrms) & \
+                (abs(uy-uyave)<3*uyrms) & \
+                (abs(uz-uzave)<3*uzrms) \
+                ,arange(n))
+    #sys.stderr.write('%s\n'%(str(ii)))
+    return ii
