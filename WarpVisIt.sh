@@ -28,10 +28,6 @@ do
             fi
             ;;
 
-        --factory-script=*)
-            ARGS+=("$i")
-            ;;
-
         --visit-install=*)
             VISIT_INSTALL=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
             if [ ! -d "$VISIT_INSTALL" ]
@@ -59,22 +55,7 @@ do
             ;;
 
         --help)
-            echo
-            echo "Usage..."
-            echo "$0 [-np=X] --factory-script=X --visit-install=X [--sim2-file=X] [--visit-script=X]"
-            echo
-            echo "    --factory-script    : Warp python code to configure the run"
-            echo "    --visit-install     : path to the VisIt install directory"
-            echo "    --warpvisit-install : path to the WarpVisIt install directory"
-            echo "    --sim-file          : where the run should place the sim2 file"
-            echo "    --script-dir        : where to find user supplied scripts"
-            echo "    --interactive       : wait for connection to WarpisIt from the VisIt GUI"
-            echo "    --gdb               : run the program in gdb"
-            echo "    --cli               : start a VisIt CLI process"
-            echo "    --massif            : profile using massif"
-            echo "    --memcheck          : profile using memcheck"
-            echo
-            exit
+            HELP=1
             ;;
 
         *)
@@ -107,6 +88,23 @@ if [[ -n "$VISIT_INSTALL" ]]
 then
     source ${WARPVISIT_INSTALL}/WarpVisItEnv.sh $VISIT_INSTALL
 fi
+
+if [[ -n "$HELP" ]]
+then
+    python ${WARPVISIT_INSTALL}/WarpVisItCLIMain.py --help
+    python ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py --help
+    echo "WarpVisIt.sh"
+    echo "-n or -np : : number of MPI processes to launch"
+    echo "--visit-install : : path to visit install, configures the environment for you"
+    echo "--mpiexec : : mpiexec command and extra args"
+    echo "--gdb : : run the program in gdb"
+    echo "--cli : : start a VisIt CLI process"
+    echo "--massif : : profile using massif"
+    echo "--memcheck : : profile using memcheck"
+    echo
+    exit
+fi
+
 
 # start the run
 if [[ -n "$CLI" ]]

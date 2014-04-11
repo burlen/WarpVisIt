@@ -43,8 +43,7 @@ class WarpVisItSimulationFactory:
         """
         Return list of command line options and environment vars
         """
-        return
-        "--factory-script : WARPVISIT_FACTORY_SCRIPT : path to WarpVisItSimulation factory\n"
+        return "--factory-script : WARPVISIT_FACTORY_SCRIPT : path to user implementation of WarpVisItSimulation factory\n"
 
     #-------------------------------------------------------------------------
     def CreateSimulation(self):

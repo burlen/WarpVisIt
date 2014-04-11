@@ -11,6 +11,7 @@ from WarpVisItUtil import VisItEnv
 env = VisItEnv()
 from WarpVisItUtil import pError,pDebug,pStatus
 from WarpVisItEngine import WarpVisItEngine
+from WarpVisItSimulation import WarpVisItSimulation
 from WarpVisItSimulationFactory import WarpVisItSimulationFactory
 
 #-----------------------------------------------------------------------------
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     ap.add_argument('--help',default=False,action='store_true')
     opts = vars(ap.parse_known_args(argv)[0])
     if opts['help']:
-        sys.stderr.write('WarpVisItEngineMain\nUsage:\n\n%s%s%s\n\n'%(
+        pStatus('\nWarpVisItEngineMain\nUsage:\n\nWarpVisItEngine\n%s\nWarpVisItSimulation\n%s\nWarpVisItSimulationFactory\n%s'%(
             WarpVisItEngine.GetCommandLineHelp(),
             WarpVisItSimulation.GetCommandLineHelp(),
             WarpVisItSimulationFactory.GetCommandLineHelp()))

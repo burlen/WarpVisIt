@@ -33,7 +33,10 @@ echo "export VISIT=$VISIT" >> .tmpVisItEnv
 echo "export PATH=$VISIT_INSTALL/bin:$PATH" >> .tmpVisItEnv
 
 # dump for verification
-cat .tmpVisItEnv
+if [[ -n "$WARPVISIT_ENV_VERBOSE" ]]
+then
+    cat .tmpVisItEnv
+fi
 
 # bring them in
 source .tmpVisItEnv
