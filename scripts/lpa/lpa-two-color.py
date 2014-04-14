@@ -984,10 +984,17 @@ def initlpa():
 
 
 #----------------------------------------------------------------------------
-def haloFilter(x,y,z,ux,uy,uz):
+def haloFilter(species):
     from parallel import globalvar,globalave
     from numpy import sqrt,shape,take,arange,compress,abs
     import sys
+    # get particle data
+    x = species.getx(gather=0)
+    y = species.gety(gather=0)
+    z = species.getz(gather=0)
+    ux = species.getux(gather=0)
+    uy = species.getuy(gather=0)
+    uz = species.getuz(gather=0)
     # get rms values
     xrms = sqrt(globalvar(x))
     yrms = sqrt(globalvar(y))
