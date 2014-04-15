@@ -1,9 +1,8 @@
-from WarpVisItUtil import pError
-from WarpVisItUtil import pDebug
 import os
 import sys
 import time
 import argparse
+from WarpVisItUtil import pError,pDebug,pStatus,getEnvVar
 
 #-----------------------------------------------------------------------------
 class WarpVisItCLI:
@@ -17,18 +16,22 @@ class WarpVisItCLI:
         """ """
         self.__Timeout = 1000
         self.__Interval = 10
-        self.__SimFile = os.getenv('WARPVISIT_SIM2_FILE')
-        if not self.__SimFile:
-            self.__SimFile = 'WarpVisIt.sim2'
+        self.__SimFile =  getEnvVar('WARPVISIT_SIM2_FILE',str,'WarpVisIt.sim2')
+        self.__Log = getEnvVar('WARPVISIT_CLI_LOG',str,'')
 
         # parse command line args
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='WarpVisItCLI',add_help=False)
         ap.add_argument('--sim-file',type=str,default=self.__SimFile)
         ap.add_argument('--timeout',type=int,default=self.__Timeout)
+        ap.add_argument('--cli-log',type=str,default=self.__Log)
         opts = vars(ap.parse_known_args(args)[0])
         self.__SimFile = os.path.abspath(opts['sim_file'])
         self.__Timeout = opts['timeout']
-
+        self.__Log = opts['cli_log']
+        if self.__Log:
+            f = open(self.__Log,'w')
+            sys.stderr = f
+            sys.stdout = f
         return
 
     #-------------------------------------------------------------------------
@@ -89,8 +92,7 @@ class WarpVisItCLI:
         the visualization defined by the visFunction. Any given arguments
         are passed on to the viewer in the form of command line arguments.
         """
-        from WarpVisItUtil import pDebug
-        from WarpVisItUtil import pError
+        from WarpVisItUtil import pDebug,pError
         from visit import visit
         import sys
         import os

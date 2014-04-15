@@ -3,9 +3,8 @@ import os
 import sys
 import argparse
 import time
-from WarpVisItUtil import VisItEnv
+from WarpVisItUtil import pError,pDebug,pStatus,VisItEnv
 env = VisItEnv()
-from WarpVisItUtil import pError,pDebug,pStatus
 from WarpVisItCLI import WarpVisItCLI
 
 #-----------------------------------------------------------------------------
