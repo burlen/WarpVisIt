@@ -2,9 +2,11 @@
 import os
 import sys
 # hide command line from warp
-argv = sys.argv
-sys.argv = [argv[0]]
-#
+import warpoptions
+warpoptions.ignoreUnknownArgs = True
+warpoptions.quietImport = True
+warpoptions.init_parser()
+
 import argparse
 import time
 from WarpVisItUtil import VisItEnv
@@ -21,21 +23,22 @@ if __name__ == "__main__":
     # parse command line args
     ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='',add_help=False)
     ap.add_argument('--help',default=False,action='store_true')
-    opts = vars(ap.parse_known_args(argv)[0])
+    opts = vars(ap.parse_known_args(sys.argv)[0])
     if opts['help']:
-        pStatus('\nWarpVisItEngineMain\nUsage:\n\nWarpVisItEngine\n%s\nWarpVisItSimulation\n%s\nWarpVisItSimulationFactory\n%s'%(
+        pStatus('\nWarpVisItEngineMain\nUsage:\n\nWarp\n%s\nWarpVisItEngine\n%s\nWarpVisItSimulation\n%s\nWarpVisItSimulationFactory\n%s'%(
+            warpoptions.warpoptionsstr(),
             WarpVisItEngine.GetCommandLineHelp(),
             WarpVisItSimulation.GetCommandLineHelp(),
             WarpVisItSimulationFactory.GetCommandLineHelp()))
         sys.exit(0)
 
     # use the factory to create user's simualtion
-    factory = WarpVisItSimulationFactory(argv)
+    factory = WarpVisItSimulationFactory(sys.argv)
     simulation = factory.CreateSimulation()
     simulation.Initialize()
 
     # create a visit engine
-    engine = WarpVisItEngine(argv)
+    engine = WarpVisItEngine(sys.argv)
     engine.Initalize()
     engine.SetSimulation(simulation)
 

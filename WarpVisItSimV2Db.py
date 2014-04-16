@@ -1,4 +1,9 @@
 import numpy as np
+# hide command line from warp
+import warpoptions
+warpoptions.ignoreUnknownArgs = True
+warpoptions.quietImport = True
+warpoptions.init_parser()
 import warp
 import parallel
 import simV2
