@@ -269,8 +269,8 @@ class WarpVisItSpeciesFilters(object):
         This filter is similar to the ThresholdFilter with the main difference that
         the selection is accumulative, i.e., a particle is selected if it suffices
         the threshold condition at the current timestep or did so at any of the 
-        previous timesteps. This function uses the ThresholdSelection filter function
-        and is very similar in use.
+        previous timesteps at which the filter was evaluated. This function uses 
+        the ThresholdSelection filter function and is very similar in it use.
         
         Paramters:
         
