@@ -170,6 +170,8 @@ class WarpVisItSpeciesFilters(object):
         the WarpVisItSpeciesFilters class
         """
         return {'ThresholdFilter': cls.ThresholdFilter,
+                'AccumulativeThresholdFilter': cls.AccumulativeThresholdFilter,
+                'PidFilter': cls.PidFilter,
                 'HaloFilter': cls.HaloFilter}
         
 
@@ -195,17 +197,18 @@ class WarpVisItSpeciesFilters(object):
                                         filterFunc=filterFunc,
                                         filterName=filterName,
                                         **kwargs)
-                                 
+    
     
     #----------------------------------------------------------------------------
     @staticmethod
     def ThresholdFilter(species, **kwargs):
         """
-        Filter used for range-based selection of particles.
+        Filter used for range-based selection of particles at the current timestep.
         
         Paramters:
         
-            species : The particle species object to be filtered
+            species : The particle species object to be filtered (set automatically
+                      by the  WarpVisItFilteredSpecies object)
             **kwargs : Define thresholds to be applied via a series of
                        keyword arguments defined as follows var__op=val
                        where var is the variable name, op is the selection
@@ -225,6 +228,10 @@ class WarpVisItSpeciesFilters(object):
                        WarpVisItFilteredSpecies object via corresponding get
                        function. 
         
+        Returns:
+        
+            indexlist : numpy array of the selected array indicies 
+        
         Examples:
         
             * To find all particle with px>1e9 and x<10 define:
@@ -233,11 +240,10 @@ class WarpVisItSpeciesFilters(object):
                               x__less=10)
                        
         """
-        import numpy as np
         #Return all indicies if no selection has been applied
         if len(kwargs) == 0:
             numpart = species.getx(gather=0).shape[0]
-            return np.arange(numpart)
+            return numpy.arange(numpart)
         #Iterate over all selection parameters  and compute the selection
         index = 0
         for key, value in kwargs.items():
@@ -245,7 +251,7 @@ class WarpVisItSpeciesFilters(object):
             variable, operation = key.split("__")
             getname = "get"+variable
             variabledata = getattr(species, getname)(gather=0)
-            operationfunc = getattr(np, operation)
+            operationfunc = getattr(numpy, operation)
             if index == 0 :
                 selection = operationfunc(variabledata, value)
             else:
@@ -253,8 +259,103 @@ class WarpVisItSpeciesFilters(object):
             index += 1
             
         #Get the indicies of the selected values
-        return np.flatnonzero(selection)
-            
+        return numpy.flatnonzero(selection)
+
+    
+    #----------------------------------------------------------------------------
+    @staticmethod
+    def AccumulativeThresholdFilter(self, species, **kwargs):
+        """
+        This filter is similar to the ThresholdFilter with the main difference that
+        the selection is accumulative, i.e., a particle is selected if it suffices
+        the threshold condition at the current timestep or did so at any of the 
+        previous timesteps. This function uses the ThresholdSelection filter function
+        and is very similar in use.
+        
+        Paramters:
+        
+            self : With the self paramater as first argument, the filter 
+                   function will be bound to the  WarpVisItFilteredSpecies object
+                   it is assigned to. This allows the filter function to save 
+                   the partilcls IDs selected at previous timesteps. The self
+                   paramters is set automatically as usual for bound methods.
+                   (Set automatically by the  WarpVisItFilteredSpecies object)
+            species : The particle species object to be filtered (set automatically
+                      by the  WarpVisItFilteredSpecies object)
+            **kwargs : Define thresholds to be applied via a series of
+                       keyword arguments defined as follows var__op=val
+                       where var is the variable name, op is the selection
+                       operation, and val is the selection value. All 
+                       selections are combined via AND, i.e., only elements
+                       that suffice all conditions pass the filter. Valid 
+                       operations are:
+                       
+                       * greater
+                       * greater_equal,
+                       * less
+                       * less_equal
+                       * equal
+                       * not_equal
+                       
+                       Valid variables include all variables exposed by the
+                       WarpVisItFilteredSpecies object via corresponding get
+                       function. 
+        
+        Returns:
+        
+            indexlist : numpy array of the selected array indicies
+        
+        Examples:
+        
+            * To find all particle that exceeded a momentum pz>=1e10 at any 
+              point in time and that remained within a given transverse
+              range of -5<x<5 we can sepcify :
+              AccumulativeThresholdFilter(species,
+                                          pz__greater_equal=1e10,
+                                          x__less_equal=5,
+                                          x__greater=-5)
+                       
+        """
+    
+        # Compute the list of particls ids selected at the current timestep
+        indexlist = WarpVisItSpeciesFilters.ThresholdFilter(species, **kwargs)
+        speciespid = species.getpid(gather=0)
+        numpart = speciespid.shape[0]
+        currentids = speciespid[indexlist]
+        # Get the array of previously selected particle ids
+        try:
+            previousids = numpy.asarray([])
+        except AttributeError:
+            previousids = self.__FilterIds
+        print (currentids, previousids)
+        # Merge the current and previous list of particle ids
+        self.__FilterIds =  numpy.unique(numpy.hstack((currentids,previousids)),
+                                         return_index=False,
+                                         return_inverse=False)
+        numids = self.__FilterIds.shape[0]
+        # Convert the list of ids to a index selection for the current timestep
+        return numpy.flatnonzero(numpy.in1d(speciespid, self.__FilterIds))
+        
+    
+    #----------------------------------------------------------------------------
+    @staticmethod
+    def PidFilter(self, species, pidlist):
+        """
+        Select particles based on a user-defined list of particle particle ids (pids).
+        
+        Paramters:
+        
+            species : The particle species object to be filtered (set automatically
+                      by the  WarpVisItFilteredSpecies object)
+            pidlist : List of user-defined particle ids (pids) to be selected
+        
+        Returns:
+        
+            indexlist : numpy array of the selected array indicies
+        """
+        return numpy.flatnonzero(numpy.in1d(species.getpid(gather=0), pidlist))
+    
+    
 
     #----------------------------------------------------------------------------
     @staticmethod
@@ -266,7 +367,8 @@ class WarpVisItSpeciesFilters(object):
         
         Paramters:
         
-            species : The particle species object to be filtered
+            species : The particle species object to be filtered (set automatically
+                      by the  WarpVisItFilteredSpecies object)
             filterRange : Multiple of standard deviation filter range range
             
         Returns:
@@ -309,8 +411,6 @@ class WarpVisItSpeciesFilters(object):
                     ,arange(n))
         #sys.stderr.write('%s\n'%(str(ii)))
         return ii
-
-
 
 
 
