@@ -155,5 +155,164 @@ class WarpVisItFilteredSpecies(object):
 
 
 
+#############################################################################
+class WarpVisItSpeciesFilters(object):
+    """
+    Class providing a collection of common filters used with the
+    WarpVisItFilteredSpecies class to generate filtered species.
+    """
+    
+    #----------------------------------------------------------------------------
+    @classmethod
+    def GetAvailableFilters(cls):
+        """
+        Get dictionary of available filter methods defined by 
+        the WarpVisItSpeciesFilters class
+        """
+        return {'ThresholdFilter': cls.ThresholdFilter,
+                'HaloFilter': cls.HaloFilter}
+        
+
+    #----------------------------------------------------------------------------
+    @classmethod
+    def CreateFilteredSpecies(cls,species,filterType,filterName,**kwargs):
+        """
+        Convenience factory method to create new filtered species for 
+        the given species, using the given filter type.
+           
+        Paramters:
+        
+            species : The species object to which filtering is applied
+            filterType : The type of filter to be used. One of AvailableFilters
+        
+        Optional Parameters:
+        
+            kwargs : Additional parameters specific to the filter functions
+        
+        """
+        filterFunc = cls.GetAvailableFilters()[filterType]
+        return WarpVisItFilteredSpecies(species=species,
+                                        filterFunc=filterFunc,
+                                        filterName=filterName,
+                                        **kwargs)
+                                 
+    
+    #----------------------------------------------------------------------------
+    @staticmethod
+    def ThresholdFilter(species, **kwargs):
+        """
+        Filter used for range-based selection of particles.
+        
+        Paramters:
+        
+            species : The particle species object to be filtered
+            **kwargs : Define thresholds to be applied via a series of
+                       keyword arguments defined as follows var__op=val
+                       where var is the variable name, op is the selection
+                       operation, and val is the selection value. All 
+                       selections are combined via AND, i.e., only elements
+                       that suffice all conditions pass the filter. Valid 
+                       operations are:
+                       
+                       * greater
+                       * greater_equal,
+                       * less
+                       * less_equal
+                       * equal
+                       * not_equal
+                       
+                       Valid variables include all variables exposed by the
+                       WarpVisItFilteredSpecies object via corresponding get
+                       function. 
+        
+        Examples:
+        
+            * To find all particle with px>1e9 and x<10 define:
+              ThresholdFilter(species,
+                              px__greater=1e9,
+                              x__less=10)
+                       
+        """
+        import numpy as np
+        #Return all indicies if no selection has been applied
+        if len(kwargs) == 0:
+            numpart = species.getx(gather=0).shape[0]
+            return np.arange(numpart)
+        #Iterate over all selection parameters  and compute the selection
+        index = 0
+        for key, value in kwargs.items():
+            # Get the variable and operation and associated functions
+            variable, operation = key.split("__")
+            getname = "get"+variable
+            variabledata = getattr(species, getname)(gather=0)
+            operationfunc = getattr(np, operation)
+            if index == 0 :
+                selection = operationfunc(variabledata, value)
+            else:
+                selection &= operationfunc(variabledata, value)
+            index += 1
+            
+        #Get the indicies of the selected values
+        return np.flatnonzero(selection)
+            
+
+    #----------------------------------------------------------------------------
+    @staticmethod
+    def HaloFilter(species, filterRange=3.):
+        """
+        Filter commonly used to remove halo particles from a particle beam.
+        Retrieve particles that are within filterRange*std range of
+        the average in x,y,z,ux,uy,uz space.
+        
+        Paramters:
+        
+            species : The particle species object to be filtered
+            filterRange : Multiple of standard deviation filter range range
+            
+        Returns:
+            
+            List of inidices of particles to be selected
+        """
+        from parallel import globalvar,globalave
+        from numpy import sqrt,shape,take,arange,compress,abs
+        import sys
+        # get particle data
+        x = species.getx(gather=0)
+        y = species.gety(gather=0)
+        z = species.getz(gather=0)
+        ux = species.getux(gather=0)
+        uy = species.getuy(gather=0)
+        uz = species.getuz(gather=0)
+        # get rms values
+        xrms = sqrt(globalvar(x))
+        yrms = sqrt(globalvar(y))
+        zrms = sqrt(globalvar(z))
+        uxrms = sqrt(globalvar(ux))
+        uyrms = sqrt(globalvar(uy))
+        uzrms = sqrt(globalvar(uz))
+        # get average values
+        xave=globalave(x)
+        yave=globalave(y)
+        zave=globalave(z)
+        uxave=globalave(ux)
+        uyave=globalave(uy)
+        uzave=globalave(uz)
+        n=shape(x)[0]
+        #sys.stderr.write('rms = %g %g %g %g %g %g\nave = %g %g %g %g %g %g\nn=%d\n'%(xrms,yrms,zrms,uxrms,uyrms,uzrms,xave,yave,zave,uxave,uyave,uzave,n))
+        # get indices of particles inside 3*rms in 6-D phase-space
+        ii=compress((abs(x-xave)<filterRange*xrms) & \
+                    (abs(y-yave)<filterRange*yrms) & \
+                    (abs(z-zave)<filterRange*zrms) & \
+                    (abs(ux-uxave)<filterRange*uxrms) & \
+                    (abs(uy-uyave)<filterRange*uyrms) & \
+                    (abs(uz-uzave)<filterRange*uzrms) \
+                    ,arange(n))
+        #sys.stderr.write('%s\n'%(str(ii)))
+        return ii
+
+
+
+
+
 
 
