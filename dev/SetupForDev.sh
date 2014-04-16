@@ -18,7 +18,7 @@ fi
 # tweak what the hook checks for
 # we don't want tabs or trailing white space
 echo -n "define whitespace errors..."
-git config core.whitespace trailing-space,space-before-tab,indent-with-non-tab
+git config core.whitespace trailing-space
 nok=$?
 if [[ "$nok" == "0" ]]
 then
