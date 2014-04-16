@@ -310,7 +310,7 @@ def plotPColorElec1Uz(winId):
     PseudocolorAtts.lightingFlag = 1
     SetPlotOptions(PseudocolorAtts)
 
-    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1)
+    setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Ux', showDB=1, showBbox=1)
 
     DrawPlots()
     setView(winId, plotId)
@@ -357,16 +357,9 @@ def plotBinElec0Weights(winId, nbx, nbz):
     DataBinningAtts.reductionOperator = DataBinningAtts.Sum  # Average, Minimum, Maximum, StandardDeviation, Variance, Sum, Count, RMS, PDF
     DataBinningAtts.varForReduction = "Electron-0/weights"
     DataBinningAtts.emptyVal = 0
-    #DataBinningAtts.outputType = DataBinningAtts.OutputOnInputMesh  # OutputOnBins, OutputOnInputMesh
     DataBinningAtts.outputType = DataBinningAtts.OutputOnBins  # OutputOnBins, OutputOnInputMesh
     DataBinningAtts.removeEmptyValFromCurve = 1
     SetOperatorOptions(DataBinningAtts, 0)
-
-    #AddOperator("Project", 0)
-    #ProjectAtts = ProjectAttributes()
-    #ProjectAtts.projectionType = ProjectAtts.XZCartesian  # ZYCartesian, XZCartesian, XYCartesian, XRCylindrical, YRCylindrical, ZRCylindrical
-    #ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
-    #SetOperatorOptions(ProjectAtts, 0)
 
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
@@ -392,10 +385,10 @@ def plotBinElec0Weights(winId, nbx, nbz):
     PseudocolorAtts.minFlag = 1
     PseudocolorAtts.min = 0
     PseudocolorAtts.maxFlag = 1
-    PseudocolorAtts.max = 6e11
+    PseudocolorAtts.max = 4e11 # was 6e11
     #PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
     PseudocolorAtts.centering = PseudocolorAtts.Nodal  # Natural, Nodal, Zonal
-    PseudocolorAtts.colorTableName = "Spectral"
+    PseudocolorAtts.colorTableName = "RdBu" # was "Spectral"
     PseudocolorAtts.invertColorTable = 1
     PseudocolorAtts.opacityType = PseudocolorAtts.Constant  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
     PseudocolorAtts.opacityVariable = ""
@@ -472,46 +465,6 @@ def plotPColorElec1XZUz(winId):
     ElevateAtts.zeroFlag = 0
     ElevateAtts.variable = "Electron-1-uz"
     SetOperatorOptions(ElevateAtts, 0)
-
-    #AddOperator("Transform", 0)
-    #TransformAtts = TransformAttributes()
-    #TransformAtts.doRotate = 0
-    #TransformAtts.rotateOrigin = (0, 0, 0)
-    #TransformAtts.rotateAxis = (0, 0, 1)
-    #TransformAtts.rotateAmount = 0
-    #TransformAtts.rotateType = TransformAtts.Deg  # Deg, Rad
-    #TransformAtts.doScale = 1
-    #TransformAtts.scaleOrigin = (0, 0, 0)
-    #TransformAtts.scaleX = 1
-    #TransformAtts.scaleY = 1
-    #TransformAtts.scaleZ = 10
-    #TransformAtts.doTranslate = 0
-    #TransformAtts.translateX = 0
-    #TransformAtts.translateY = 0
-    #TransformAtts.translateZ = 0
-    #TransformAtts.transformType = TransformAtts.Similarity  # Similarity, Coordinate, Linear
-    #TransformAtts.inputCoordSys = TransformAtts.Cartesian  # Cartesian, Cylindrical, Spherical
-    #TransformAtts.outputCoordSys = TransformAtts.Spherical  # Cartesian, Cylindrical, Spherical
-    #TransformAtts.m00 = 1
-    #TransformAtts.m01 = 0
-    #TransformAtts.m02 = 0
-    #TransformAtts.m03 = 0
-    #TransformAtts.m10 = 0
-    #TransformAtts.m11 = 1
-    #TransformAtts.m12 = 0
-    #TransformAtts.m13 = 0
-    #TransformAtts.m20 = 0
-    #TransformAtts.m21 = 0
-    #TransformAtts.m22 = 1
-    #TransformAtts.m23 = 0
-    #TransformAtts.m30 = 0
-    #TransformAtts.m31 = 0
-    #TransformAtts.m32 = 0
-    #TransformAtts.m33 = 1
-    #TransformAtts.invertLinearTransform = 0
-    #TransformAtts.vectorTransformMethod = TransformAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
-    #TransformAtts.transformVectors = 1
-    #SetOperatorOptions(TransformAtts, 0)
 
     PseudocolorAtts = PseudocolorAttributes()
     PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
@@ -604,7 +557,10 @@ def clearAnnotations(winId, plotId):
     return
 
 #----------------------------------------------------------------------------
-def setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0):
+def setAnnotations(winId, plotId,
+         xAxisName='X', yAxisName='Z', zAxisName='Uz', showDB=0,
+         axesType='OutsideEdges', showBbox=0
+         ):
     SetActiveWindow(winId)
     SetActivePlots(plotId)
     AnnotationAtts = AnnotationAttributes()
@@ -617,8 +573,8 @@ def setAnnotations(winId, plotId, xAxisName='X', yAxisName='Z', zAxisName='Uz', 
     AnnotationAtts.axes2D.yAxis.title.title = yAxisName
     AnnotationAtts.axes2D.yAxis.label.font.font = AnnotationAtts.axes2D.yAxis.label.font.Courier  # Arial, Courier, Times
     AnnotationAtts.axes3D.tickLocation = AnnotationAtts.axes3D.Inside  # Inside, Outside, Both
-    AnnotationAtts.axes3D.axesType = AnnotationAtts.axes3D.OutsideEdges  # ClosestTriad, FurthestTriad, OutsideEdges, StaticTriad, StaticEdges
-    AnnotationAtts.axes3D.bboxFlag = 0
+    AnnotationAtts.axes3D.axesType = getattr(AnnotationAtts.axes3D, axesType) # ClosestTriad, FurthestTriad, OutsideEdges, StaticTriad, StaticEdges
+    AnnotationAtts.axes3D.bboxFlag = showBbox
     AnnotationAtts.axes3D.xAxis.title.font.font = AnnotationAtts.axes3D.xAxis.title.font.Arial  # Arial, Courier, Times
     AnnotationAtts.axes3D.xAxis.title.font.scale = 1.2
     AnnotationAtts.axes3D.xAxis.title.font.bold = 1
