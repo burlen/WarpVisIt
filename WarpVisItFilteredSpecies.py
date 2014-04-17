@@ -15,16 +15,16 @@ class WarpVisItFilteredSpecies(object):
     def __init__(self,species,filterFunc,filterName,**kwargs):
         """
         Initalize the WarpVisItFilteredSpecies object:
-        
-        Parameters: 
-        
+
+        Parameters:
+
             species : The species object to which filtering is applied
             filterFunc : The filter function to be applied
             filterName : The name of the filter
             kwargs : Additional parameters to be passed to the filter function
-            
+
         Attributes:
-        
+
             __Species : The species object to which the filter is applied to
             __FilterFunc : The filter funtion
             __FilterArgs : Additional parameters for the filter function
@@ -32,8 +32,8 @@ class WarpVisItFilteredSpecies(object):
             __Key : Timestep key when the filter was last evaluated. Used to check __Ids.
             name : Name for the filtered species, defined by filterName and species.name
             type : Type of the species defined by species.type.
-            
-        
+
+
         """
         # Check if the filterfunction is valid
         if 'species' not in inspect.getargspec(filterFunc).args:
@@ -47,35 +47,35 @@ class WarpVisItFilteredSpecies(object):
         self.__Key = -1
         self.name = species.name + filterName
         self.type = species.type
-        
+
         return
 
     #------------------------------------------------------------------------
-    def Update(self, key):                                      
+    def Update(self, key):
         """
         Generate the ids, by calling the user provided filter function. Ids are
         only updated if the key has changed or Ids are not available.
-        
+
         Parameters:
-        
+
             key : Timestep key used to check whether the existing IDs are valid.
-             
+
         """
         if (self.__Ids is None) or (self.__Key != key):
             self.__Ids = self.__FilterFunc(self.__Species, **self.__FilterArgs)
             self.__Key = key
         return
 
-    
+
     #------------------------------------------------------------------------
-    def SetFilter(self, filterFunc):         
+    def SetFilter(self, filterFunc):
         """
         Change the filter function used.
-        
+
         Parameters:
-        
+
             filterFunc : The new filter function to be used.
-        
+
         """
         # Determine whether we need to bind the filter function to the object
         if inspect.getargspec(filterFunc).args[0] == 'self':
@@ -83,16 +83,16 @@ class WarpVisItFilteredSpecies(object):
         else:
             self.__FilterFunc = filterFunc
         self.__Ids = None
-    
+
     #------------------------------------------------------------------------
-    def SetFilterArgs(self, **kwargs):                         
+    def SetFilterArgs(self, **kwargs):
         """
         Change filter parameters
-        
+
         Parameters:
-        
+
             **kwargs: Define any keyword parameters used by the filter function
-        
+
         """
         self.__FilterArgs = kwargs
         self.__Ids = None
@@ -100,14 +100,14 @@ class WarpVisItFilteredSpecies(object):
     #------------------------------------------------------------------------
     def Filter(self, data):
         """
-        Return filtered data. Filter the given data array. Use the provided 
+        Return filtered data. Filter the given data array. Use the provided
         get functions to access common variables associated with the species,
-        e.g, getx, gety, getz etc. 
-        
+        e.g, getx, gety, getz etc.
+
         Parameters:
-        
+
             data : The data array to be filtered
-             
+
         """
         self.Update(warp.warp.top.it)
         if (len(self.__Ids) > 0):
@@ -161,84 +161,84 @@ class WarpVisItSpeciesFilters(object):
     Class providing a collection of common filters used with the
     WarpVisItFilteredSpecies class to generate filtered species.
     """
-    
+
     #----------------------------------------------------------------------------
     @classmethod
     def GetAvailableFilters(cls):
         """
-        Get dictionary of available filter methods defined by 
+        Get dictionary of available filter methods defined by
         the WarpVisItSpeciesFilters class
         """
         return {'ThresholdFilter': cls.ThresholdFilter,
                 'AccumulativeThresholdFilter': cls.AccumulativeThresholdFilter,
                 'PidFilter': cls.PidFilter,
                 'HaloFilter': cls.HaloFilter}
-        
+
 
     #----------------------------------------------------------------------------
     @classmethod
     def CreateFilteredSpecies(cls,species,filterType,filterName,**kwargs):
         """
-        Convenience factory method to create new filtered species for 
+        Convenience factory method to create new filtered species for
         the given species, using the given filter type.
-           
+
         Paramters:
-        
+
             species : The species object to which filtering is applied
             filterType : The type of filter to be used. One of AvailableFilters
-        
+
         Optional Parameters:
-        
+
             kwargs : Additional parameters specific to the filter functions
-        
+
         """
         filterFunc = cls.GetAvailableFilters()[filterType]
         return WarpVisItFilteredSpecies(species=species,
                                         filterFunc=filterFunc,
                                         filterName=filterName,
                                         **kwargs)
-    
-    
+
+
     #----------------------------------------------------------------------------
     @staticmethod
     def ThresholdFilter(species, **kwargs):
         """
         Filter used for range-based selection of particles at the current timestep.
-        
+
         Paramters:
-        
+
             species : The particle species object to be filtered (set automatically
                       by the  WarpVisItFilteredSpecies object)
             **kwargs : Define thresholds to be applied via a series of
                        keyword arguments defined as follows var__op=val
                        where var is the variable name, op is the selection
-                       operation, and val is the selection value. All 
+                       operation, and val is the selection value. All
                        selections are combined via AND, i.e., only elements
-                       that suffice all conditions pass the filter. Valid 
+                       that suffice all conditions pass the filter. Valid
                        operations are:
-                       
+
                        * greater
                        * greater_equal,
                        * less
                        * less_equal
                        * equal
                        * not_equal
-                       
+
                        Valid variables include all variables exposed by the
                        WarpVisItFilteredSpecies object via corresponding get
-                       function. 
-        
+                       function.
+
         Returns:
-        
-            indexlist : numpy array of the selected array indicies 
-        
+
+            indexlist : numpy array of the selected array indicies
+
         Examples:
-        
+
             * To find all particle with px>1e9 and x<10 define:
               ThresholdFilter(species,
                               px__greater=1e9,
                               x__less=10)
-                       
+
         """
         #Return all indicies if no selection has been applied
         if len(kwargs) == 0:
@@ -257,26 +257,26 @@ class WarpVisItSpeciesFilters(object):
             else:
                 selection &= operationfunc(variabledata, value)
             index += 1
-            
+
         #Get the indicies of the selected values
         return numpy.flatnonzero(selection)
 
-    
+
     #----------------------------------------------------------------------------
     @staticmethod
     def AccumulativeThresholdFilter(self, species, **kwargs):
         """
         This filter is similar to the ThresholdFilter with the main difference that
         the selection is accumulative, i.e., a particle is selected if it suffices
-        the threshold condition at the current timestep or did so at any of the 
-        previous timesteps at which the filter was evaluated. This function uses 
+        the threshold condition at the current timestep or did so at any of the
+        previous timesteps at which the filter was evaluated. This function uses
         the ThresholdSelection filter function and is very similar in it use.
-        
+
         Paramters:
-        
-            self : With the self paramater as first argument, the filter 
+
+            self : With the self paramater as first argument, the filter
                    function will be bound to the  WarpVisItFilteredSpecies object
-                   it is assigned to. This allows the filter function to save 
+                   it is assigned to. This allows the filter function to save
                    the partilcls IDs selected at previous timesteps. The self
                    paramters is set automatically as usual for bound methods.
                    (Set automatically by the  WarpVisItFilteredSpecies object)
@@ -285,38 +285,38 @@ class WarpVisItSpeciesFilters(object):
             **kwargs : Define thresholds to be applied via a series of
                        keyword arguments defined as follows var__op=val
                        where var is the variable name, op is the selection
-                       operation, and val is the selection value. All 
+                       operation, and val is the selection value. All
                        selections are combined via AND, i.e., only elements
-                       that suffice all conditions pass the filter. Valid 
+                       that suffice all conditions pass the filter. Valid
                        operations are:
-                       
+
                        * greater
                        * greater_equal,
                        * less
                        * less_equal
                        * equal
                        * not_equal
-                       
+
                        Valid variables include all variables exposed by the
                        WarpVisItFilteredSpecies object via corresponding get
-                       function. 
-        
+                       function.
+
         Returns:
-        
+
             indexlist : numpy array of the selected array indicies
-        
+
         Examples:
-        
-            * To find all particle that exceeded a momentum pz>=1e10 at any 
+
+            * To find all particle that exceeded a momentum pz>=1e10 at any
               point in time and that remained within a given transverse
               range of -5<x<5 we can sepcify :
               AccumulativeThresholdFilter(species,
                                           pz__greater_equal=1e10,
                                           x__less_equal=5,
                                           x__greater=-5)
-                       
+
         """
-    
+
         # Compute the list of particls ids selected at the current timestep
         indexlist = WarpVisItSpeciesFilters.ThresholdFilter(species, **kwargs)
         speciespid = species.getpid(gather=0)
@@ -335,27 +335,27 @@ class WarpVisItSpeciesFilters(object):
         numids = self.__FilterIds.shape[0]
         # Convert the list of ids to a index selection for the current timestep
         return numpy.flatnonzero(numpy.in1d(speciespid, self.__FilterIds))
-        
-    
+
+
     #----------------------------------------------------------------------------
     @staticmethod
     def PidFilter(self, species, pidlist):
         """
         Select particles based on a user-defined list of particle particle ids (pids).
-        
+
         Paramters:
-        
+
             species : The particle species object to be filtered (set automatically
                       by the  WarpVisItFilteredSpecies object)
             pidlist : List of user-defined particle ids (pids) to be selected
-        
+
         Returns:
-        
+
             indexlist : numpy array of the selected array indicies
         """
         return numpy.flatnonzero(numpy.in1d(species.getpid(gather=0), pidlist))
-    
-    
+
+
 
     #----------------------------------------------------------------------------
     @staticmethod
@@ -364,15 +364,15 @@ class WarpVisItSpeciesFilters(object):
         Filter commonly used to remove halo particles from a particle beam.
         Retrieve particles that are within filterRange*std range of
         the average in x,y,z,ux,uy,uz space.
-        
+
         Paramters:
-        
+
             species : The particle species object to be filtered (set automatically
                       by the  WarpVisItFilteredSpecies object)
             filterRange : Multiple of standard deviation filter range range
-            
+
         Returns:
-            
+
             List of inidices of particles to be selected
         """
         from parallel import globalvar,globalave
