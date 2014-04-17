@@ -376,7 +376,7 @@ class WarpVisItSpeciesFilters(object):
             List of inidices of particles to be selected
         """
         from parallel import globalvar,globalave
-        from numpy import sqrt,shape,take,arange,compress,abs
+        from numpy import sqrt,shape,take,arange,abs,flatnonzero
         import sys
         # get particle data
         x = species.getx(gather=0)
@@ -402,17 +402,10 @@ class WarpVisItSpeciesFilters(object):
         n=shape(x)[0]
         #sys.stderr.write('rms = %g %g %g %g %g %g\nave = %g %g %g %g %g %g\nn=%d\n'%(xrms,yrms,zrms,uxrms,uyrms,uzrms,xave,yave,zave,uxave,uyave,uzave,n))
         # get indices of particles inside 3*rms in 6-D phase-space
-        ii=compress((abs(x-xave)<filterRange*xrms) & \
+        ii=flatnonzero((abs(x-xave)<filterRange*xrms) & \
                     (abs(y-yave)<filterRange*yrms) & \
                     (abs(z-zave)<filterRange*zrms) & \
                     (abs(ux-uxave)<filterRange*uxrms) & \
                     (abs(uy-uyave)<filterRange*uyrms) & \
-                    (abs(uz-uzave)<filterRange*uzrms) \
-                    ,arange(n))
-        #sys.stderr.write('%s\n'%(str(ii)))
+                    (abs(uz-uzave)<filterRange*uzrms))
         return ii
-
-
-
-
-
