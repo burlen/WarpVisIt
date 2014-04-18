@@ -40,21 +40,21 @@ class LPATwoColorSimulation(WarpVisItSimulation):
         # adopt superclass settings as the default
         # so these don't have to be set by user.
         self._InitStep = self._Step
-        self._InitPlot = self._Plot
         self._InitStop = self._Stop
+        self._InitPlot = self._Plot
 
         # parse command line args
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='LPATwoColorSimulation',add_help=False)
         ap.add_argument('--big-run',default=self._BigRun,action='store_true')
         ap.add_argument('--init-step',type=int,default=self._InitStep)
-        ap.add_argument('--init-plot',type=int,default=self._InitPlot)
         ap.add_argument('--init-stop',type=int,default=self._InitStop)
+        ap.add_argument('--init-plot',type=int,default=None)
         opts = vars(ap.parse_known_args(args)[0])
         opts = vars(ap.parse_known_args(args)[0])
         self._BigRun = opts['big_run']
         self._InitStep = opts['init_step']
-        self._InitPlot = opts['init_plot']
         self._InitStop = opts['init_stop']
+        self._InitPlot = self._InitStep if opts['init_plot'] is None else opts['init_plot']
 
         # set global that controls scientists init script
         bigRun = self._BigRun

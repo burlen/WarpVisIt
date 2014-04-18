@@ -81,13 +81,13 @@ class WarpVisItSimulation(object):
         ap.add_argument('--start',type=int,default=self._Start)
         ap.add_argument('--stop',type=int,default=self._Stop)
         ap.add_argument('--step',type=int,default=self._Step)
-        ap.add_argument('--plot',type=int,default=self._Plot)
+        ap.add_argument('--plot',type=int,default=None)
         opts = vars(ap.parse_known_args(args)[0])
         self._ScriptDir = os.path.abspath(opts['script_dir'])
         self._Start = opts['start']
         self._Stop = opts['stop']
         self._Step = opts['step']
-        self._Plot = opts['plot']
+        self._Plot = self._Step if opts['plot'] is None else opts['plot']
 
         # handle special case for no plots.
         if self._Plot == 0:
