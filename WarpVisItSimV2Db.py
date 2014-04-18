@@ -7,8 +7,7 @@ warpoptions.init_parser()
 import warp
 import parallel
 import simV2
-from WarpVisItUtil import pError
-from WarpVisItUtil import pDebug
+from WarpVisItUtil import pError, pDebug
 
 
 # VisIt has a nice feature that if you use
@@ -21,14 +20,14 @@ varsep = '/'
 def getTime():
     """Return current simulation time"""
     t = warp.top.time
-    pDebug('time = %f'%(t))
+    if __debug__: pDebug('time = %f'%(t))
     return t
 
 #-----------------------------------------------------------------------------
 def getIteration():
     """Return current simulation iteration"""
     it = warp.top.it
-    pDebug('iteration = %i'%(it))
+    if __debug__: pDebug('iteration = %i'%(it))
     return it
 
 #-----------------------------------------------------------------------------
@@ -37,7 +36,7 @@ def getMetaData(userData):
     Callback function used to provide visit with metadata
     """
     valid = lambda x : x != simV2.VISIT_INVALID_HANDLE
-    pDebug('getMetaData')
+    if __debug__: pDebug('getMetaData')
 
     # VisIt assumes that each process has some data
     # so you must have at least as many domains as
@@ -193,7 +192,7 @@ def getMesh(domain, name, userData):
     # getMesh/getVar on those processes that do not
     valid = lambda x : x != simV2.VISIT_INVALID_HANDLE
 
-    pDebug('getMesh %i %s'%(domain, name))
+    if __debug__: pDebug('getMesh %i %s'%(domain, name))
 
     # particle mesh (note: visit copies because coords are not interleaved.)
     pMeshNames = getParticleMeshNames()
@@ -204,7 +203,7 @@ def getMesh(domain, name, userData):
         zvd = passParticleData(species.getz(gather=0), getDataOwner())
 
         if (not (valid(xvd) and valid(yvd) and valid(zvd))):
-            pDebug('failed to pass particle locations')
+            if __debug__: pDebug('failed to pass particle locations')
             return None
 
         mesh = simV2.VisIt_PointMesh_alloc()
@@ -319,7 +318,7 @@ def getVar(domain, varid, userData):
     # so you must have at least as many domains as
     # processes. you just return invalid handle in
     # getMesh/getVar on those processes that do not
-    pDebug('getVar %i %s'%(domain, varid))
+    if __debug__: pDebug('getVar %i %s'%(domain, varid))
 
     tok = varid.split(varsep)
     meshname = tok[0]
@@ -422,7 +421,7 @@ def getDomains(name, userData):
     # processes. you just return invalid handle in
     # getMesh/getVar on those processes that do not
     valid = lambda x : x != simV2.VISIT_INVALID_HANDLE
-    pDebug('getDomains %s'%(name))
+    if __debug__: pDebug('getDomains %s'%(name))
 
     rank = parallel.get_rank()
     numPE = parallel.number_of_PE()
@@ -459,7 +458,7 @@ def passData(data, owner=simV2.VISIT_OWNER_VISIT_EX):
     if not data.size:
         # not always an error, some processes
         # wont have data.
-        #pDebug('zero size for %s'%(str(data)))
+        #if __debug__: pDebug('zero size for %s'%(str(data)))
         return simV2.VISIT_INVALID_HANDLE
 
     vd = simV2.VisIt_VariableData_alloc()
@@ -508,7 +507,7 @@ def getGridSize(cells=False):
     size[1] = decomp.ny[decomp.iyproc]+i
     size[2] = decomp.nz[decomp.izproc]+i
 
-    pDebug(size)
+    if __debug__: pDebug(size)
     return size
 
 #-----------------------------------------------------------------------------

@@ -33,6 +33,7 @@ class WarpVisItEngine:
         self.__VisItControlStepping = True
         self.__VisItBlockingComm = True
         self.__CommandQueue = []
+        self.__EngineOpts = None
 
         # parse command line args
         interact = getEnvVar('WARPVISIT_MODE_INTERACT',bool,False)
@@ -45,12 +46,14 @@ class WarpVisItEngine:
         ap.add_argument('--interact',default=interact, action='store_true')
         ap.add_argument('--monitor',default=monitor, action='store_true')
         ap.add_argument('--batch',default=batch, action='store_true')
+        ap.add_argument('--engine-opts',type=str,default=None)
         opts = vars(ap.parse_known_args(args)[0])
         self.__SimFile = os.path.abspath(opts['sim_file'])
         self.__TraceFile = opts['trace_file']
         interact = opts['interact']
         monitor = opts['monitor']
         batch = opts['batch']
+        self.__EngineOpts = opts['engine_opts']
 
         if sum((interact,monitor,batch))>1:
             raise RuntimeError('--interact, --monitor, --batch are mutually exclusive')
@@ -80,10 +83,12 @@ class WarpVisItEngine:
         """
         Return list of command line options and environment vars
         """
-        return ("--sim-file : WARPVISIT_SIM2_FILE : Path to write sim2 file\n"
+        return ("--sim-file : WARPVISIT_SIM_FILE : Path to write sim2 file\n"
+           "--trace-file : WARPVISIT_TRACE_FILE : Path to write trace file\n"
            "--interact : WARPVISIT_MODE_INTERACT : Wait for VisIt and run with VisIt control\n"
            "--monitor : WARPVISIT_MODE_MONITOR : Listen for while running, continue without VisIt\n"
-           "--batch : WARPVISIT_MODE_BATCH : Run without VisIt\n")
+           "--batch : WARPVISIT_MODE_BATCH : Run without VisIt\n"
+           "--engine-opts : : Command line options to pass into the VisIt engine\n")
 
 
     #-------------------------------------------------------------------------
@@ -154,16 +159,16 @@ class WarpVisItEngine:
         Perform the initial setup of VisIt to include the libsim module
         with the simulation.
         """
-        pDebug('WarpVisItEngine::Initialize')
+        if __debug__: pDebug('WarpVisItEngine::Initialize')
 
         simV2.VisItSetDirectory(self.__Env.GetRoot())
 
         if self.__TraceFile:
             simV2.VisItOpenTraceFile('%d.trace'%(self.__CommRank))
 
-        if engineOpts:
-            pDebug('Using options %s'%(engineOpts))
-            simV2.VisItSetOptions(engineOpts);
+        if self.__EngineOpts:
+            if __debug__: pDebug('Using options %s'%(self.__EngineOpts))
+            simV2.VisItSetOptions(self.__EngineOpts);
 
         if self.__CommRank == 0:
             if not simV2.VisItInitializeSocketAndDumpSimFile(
@@ -195,7 +200,7 @@ class WarpVisItEngine:
         onErrorContinue = lambda : self.__Mode=='Monitor'
         callModeMethod = lambda f : getattr(self, f+self.__Mode)()
 
-        pDebug('WarpVisItEngine::EventLoop')
+        if __debug__: pDebug('WarpVisItEngine::EventLoop')
 
         while 1:
             # test or wait for incomming communication.
@@ -206,7 +211,7 @@ class WarpVisItEngine:
                 event = parallel.broadcast(0)
 
             # process incomming communication
-            pDebug('event=%d'%(event))
+            if __debug__: pDebug('event=%d'%(event))
 
             # internal comm error
             if doError(event):
@@ -223,7 +228,7 @@ class WarpVisItEngine:
                 # this is where we can safely do things.
                 # it occurs only when VisIt is not in the
                 # middle of processing its own commands.
-                pDebug('update')
+                if __debug__: pDebug('update')
                 callModeMethod('Update')
 
             # internal connection
@@ -243,7 +248,7 @@ class WarpVisItEngine:
 
             # internal comm
             elif doInternal(event):
-                pDebug('internal')
+                if __debug__: pDebug('internal')
                 if not self.CommunicateLibsim():
                     pError('Error while processing internal commands')
                     callModeMethod('Initialize')
@@ -254,7 +259,7 @@ class WarpVisItEngine:
 
             # bad value
             else:
-                pError('unknown command')
+                pError('unknown command %d'%(event))
 
             # check for asynchronous shutdown request
             if self.__ShutdownRequested:
@@ -272,7 +277,7 @@ class WarpVisItEngine:
         """
         Install database callbacks in libsim
         """
-        pDebug('WarpVisItEngine::InitializeLibsim')
+        if __debug__: pDebug('WarpVisItEngine::InitializeLibsim')
         simV2.VisItSetGetMetaData(WarpVisItSimV2Db.getMetaData, self)
         simV2.VisItSetGetMesh(WarpVisItSimV2Db.getMesh, self)
         simV2.VisItSetGetVariable(WarpVisItSimV2Db.getVar, self)
@@ -291,34 +296,34 @@ class WarpVisItEngine:
         COMMAND_SUCCESS = 1
         COMMAND_FAILURE = 2
 
-        pDebug('WarpVisItEngine::ProcessCommands')
+        if __debug__: pDebug('WarpVisItEngine::ProcessCommands')
 
         if masterRank(self.__CommRank):
             if simV2.VisItProcessEngineCommand():
-                pDebug('master success')
+                if __debug__: pDebug('master success')
                 broadcastSlaveCommand(COMMAND_SUCCESS)
                 return True
 
             else:
-                pDebug('master discconnect')
+                if __debug__: pDebug('master discconnect')
                 broadcastSlaveCommand(COMMAND_FAILURE)
                 return False
 
         else:
             while True:
                 command = broadcastSlaveCommand()
-                pDebug('slave command %i'%(command))
+                if __debug__: pDebug('slave command %i'%(command))
 
                 if command == COMMAND_PROCESS:
-                    pDebug('slave process command')
+                    if __debug__: pDebug('slave process command')
                     simV2.VisItProcessEngineCommand()
 
                 elif command == COMMAND_SUCCESS:
-                    pDebug('slave success')
+                    if __debug__: pDebug('slave success')
                     return True
 
                 elif command == COMMAND_FAILURE:
-                    pDebug('slave disconnect')
+                    if __debug__: pDebug('slave disconnect')
                     return False
 
                 else:
@@ -341,7 +346,7 @@ class WarpVisItEngine:
         """
         callModeMethod = lambda f : getattr(self, f+self.__Mode)()
 
-        pDebug('WarpVisItEngine::ProcessCommand %s'%(cmd))
+        if __debug__: pDebug('WarpVisItEngine::ProcessCommand %s'%(cmd))
 
         self.__CommandQueue.append(cmd)
 
@@ -351,7 +356,7 @@ class WarpVisItEngine:
                 self.SetSynchronous(False)
                 self.__CommandQueue.pop()
             else:
-                pDebug('defered %s'%(cmd))
+                if __debug__: pDebug('defered %s'%(cmd))
                 return
 
         # now in asynchronous mode
@@ -362,7 +367,7 @@ class WarpVisItEngine:
             qcmd = self.__CommandQueue.pop()
             i += 1
 
-            pDebug('processes %s'%(qcmd))
+            if __debug__: pDebug('processes %s'%(qcmd))
 
             if qcmd == 'adv':
                 self.StepSimulation()
@@ -413,7 +418,7 @@ class WarpVisItEngine:
     #-------------------------------------------------------------------------
     def PushRenderScripts(self):
         """Render simulation data"""
-        pDebug('WarpVisItEngine::Render')
+        if __debug__: pDebug('WarpVisItEngine::Render')
 
         activeScripts = self.__Simulation.GetActiveRenderScripts()
         if len(activeScripts):
@@ -424,7 +429,7 @@ class WarpVisItEngine:
             # and append a command to disable it to
             # the end of each.
             for script in activeScripts:
-                pDebug('Rendering %s'%(script))
+                if __debug__: pDebug('Rendering %s'%(script))
                 self.SetSynchronous(True)
                 source = scripts[script]
                 source += ("\nfrom visit import visit\n"
@@ -437,7 +442,7 @@ class WarpVisItEngine:
     #-------------------------------------------------------------------------
     def StepSimulation(self):
         """Drive the simulation through one or more steps"""
-        pDebug('WarpVisItEngine::StepSimulation')
+        if __debug__: pDebug('WarpVisItEngine::StepSimulation')
 
         self.__Simulation.Advance()
         simV2.VisItTimeStepChanged()
@@ -607,27 +612,27 @@ class WarpVisItEngine:
 def broadcastInt(val, sender=0) :
     """Integer broadcast callback for libsim"""
     result = parallel.broadcast(val, root=sender)
-    pDebug('broadcastInt %i'%(val))
+    if __debug__: pDebug('broadcastInt %i'%(val))
     return result
 
 #-----------------------------------------------------------------------------
 def broadcastString(val, n=0, sender=0) :
     """String broadcast callback for libsim"""
     result = parallel.broadcast(val, root=sender)
-    pDebug('broadcastString %s'%(result))
+    if __debug__: pDebug('broadcastString %s'%(result))
     return result
 
 #-----------------------------------------------------------------------------
 def broadcastSlaveCommand(command=0):
     """Helper function for ProcessCommands"""
     result = parallel.broadcast(command, root=0)
-    pDebug('broadcastSlaveCommand %i'%(result))
+    if __debug__: pDebug('broadcastSlaveCommand %i'%(result))
     return result
 
 #-----------------------------------------------------------------------------
 def slaveProcessCallback():
     """Callback involved in command communication"""
-    pDebug('slaveProcessCallback')
+    if __debug__: pDebug('slaveProcessCallback')
     processCommand = int(0)
     broadcastSlaveCommand(processCommand)
 

@@ -18,12 +18,14 @@ class WarpVisItCLI:
         self.__Interval = 10
         self.__SimFile =  getEnvVar('WARPVISIT_SIM2_FILE',str,'WarpVisIt.sim2')
         self.__Log = getEnvVar('WARPVISIT_CLI_LOG',str,'')
+        self.__ViewerOpts = None
 
         # parse command line args
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='WarpVisItCLI',add_help=False)
         ap.add_argument('--sim-file',type=str,default=self.__SimFile)
         ap.add_argument('--timeout',type=int,default=self.__Timeout)
         ap.add_argument('--cli-log',type=str,default=self.__Log)
+        ap.add_argument('--viewer-opts',type=str,default=None)
         opts = vars(ap.parse_known_args(args)[0])
         self.__SimFile = os.path.abspath(opts['sim_file'])
         self.__Timeout = opts['timeout']
@@ -32,6 +34,7 @@ class WarpVisItCLI:
             f = open(self.__Log,'w')
             sys.stderr = f
             sys.stdout = f
+        self.__ViewerOpts = opts['viewer_opts']
         return
 
     #-------------------------------------------------------------------------
@@ -41,7 +44,9 @@ class WarpVisItCLI:
         Return list of command line options and environment vars
         """
         return ("--sim-file : WARPVISIT_SIM2_FILE : Path to read sim2 file\n"
-          "--timeout : : Number of seconds to wait for the engine\n")
+          "--timeout : : Number of seconds to wait for the engine\n"
+          "--cli-log : : Redirect stderr and stdout to this file\n"
+          "--viewer-opts : : Command linie options to pass to the VisIt viewer\n")
 
 
     #-------------------------------------------------------------------------
@@ -62,7 +67,7 @@ class WarpVisItCLI:
         Configure the object. If the sim2 file is
         located before timeout occurs True is returned.
         """
-        pDebug('WarpVisItCLI::Initialize')
+        if __debug__: pDebug('WarpVisItCLI::Initialize')
         # we may need to wait while the engine launches
         # in a separate process
         simFileFound=False
@@ -96,10 +101,13 @@ class WarpVisItCLI:
         from visit import visit
         import sys
         import os
-        pDebug('WarpVisItCLI::EventLoop')
+        if __debug__: pDebug('WarpVisItCLI::EventLoop')
 
         # this process becomes the CLI. here is where we start the viewer
-        # process. yes another process.
+        # process.
+        if self.__ViewerOpts:
+            args += self.__ViewerOpts.split()
+
         for arg in args:
             visit.AddArgument(arg)
 
