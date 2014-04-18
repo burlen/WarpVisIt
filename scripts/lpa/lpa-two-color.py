@@ -30,18 +30,34 @@ class LPATwoColorSimulation(WarpVisItSimulation):
     """
     def __init__(self,args=[]):
         global bigRun
-        # parse command line args
-        self.bigRun = False
-
-        # parse command line args
-        ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='LPATwoColorSimulation',add_help=False)
-        ap.add_argument('--big-run',default=self.bigRun,action='store_true')
-        opts = vars(ap.parse_known_args(args)[0])
-        self.bigRun = opts['big_run']
-        bigRun = self.bigRun
 
         # call base class constructor
         WarpVisItSimulation.__init__(self,args)
+
+        self._BigRun = False
+
+        # for two phases of vis output frequency
+        # adopt superclass settings as the default
+        # so these don't have to be set by user.
+        self._InitStep = self._Step
+        self._InitPlot = self._Plot
+        self._InitStop = self._Stop
+
+        # parse command line args
+        ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='LPATwoColorSimulation',add_help=False)
+        ap.add_argument('--big-run',default=self._BigRun,action='store_true')
+        ap.add_argument('--init-step',type=int,default=self._InitStep)
+        ap.add_argument('--init-plot',type=int,default=self._InitPlot)
+        ap.add_argument('--init-stop',type=int,default=self._InitStop)
+        opts = vars(ap.parse_known_args(args)[0])
+        opts = vars(ap.parse_known_args(args)[0])
+        self._BigRun = opts['big_run']
+        self._InitStep = opts['init_step']
+        self._InitPlot = opts['init_plot']
+        self._InitStop = opts['init_stop']
+
+        # set global that controls scientists init script
+        bigRun = self._BigRun
 
         # setup vis scripts
         self.AddRenderScript('4Views','render-four-views.py')
@@ -61,6 +77,36 @@ class LPATwoColorSimulation(WarpVisItSimulation):
         print 'initialization complete'
         return
 
+    #------------------------------------------------------------------------
+    def GetActiveRenderScripts(self):
+        """
+        Specialization for two phases of plotting, an inital presumably
+        low frequency phase where we monitor sim nstartup, and a final
+        presumably high frequency phase to capture results.
+        """
+        if warp.warp.top.it <= self._InitStop:
+            # initial
+            if (warp.warp.top.it > 0) and (warp.warp.top.it%self._InitPlot == 0):
+                return self.GetRenderScripts().keys()
+            else:
+                return []
+        else:
+            # final
+            return super(LPATwoColorSimulation,self).GetActiveRenderScripts()
+
+    #------------------------------------------------------------------------
+    def Advance(self):
+        """
+        Specialization for two phases of plotting, an inital presumably
+        low frequency phase where we monitor sim nstartup, and a final
+        presumably high frequency phase to capture results.
+        """
+        if warp.warp.top.it < self._InitStop:
+            # initial
+            warp.step(self._InitStep)
+        else:
+            # final
+            return super(LPATwoColorSimulation,self).Advance()
 
 # ---------------------------------------------------------------------------
 # helper functions
