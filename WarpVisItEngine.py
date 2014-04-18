@@ -22,10 +22,8 @@ class WarpVisItEngine:
         self.__CommRank = parallel.get_rank()
         self.__CommSize = parallel.number_of_PE()
         self.__Env = VisItEnv()
-        self.__SimFile = os.getenv('WARPVISIT_SIM2_FILE')
-        if not self.__SimFile:
-            self.__SimFile = 'WarpVisIt.sim2'
-        self.__HasTrace = False
+        self.__SimFile = getEnvVar('WARPVISIT_SIM_FILE',str,'WarpVisIt.sim2')
+        self.__TraceFile = getEnvVar('WARPVISIT_TRACE_FILE',bool,False)
         self.__Simulation = None
         self.__ShutdownRequested = False
         self.__Connected = False
@@ -43,11 +41,13 @@ class WarpVisItEngine:
 
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='WarpVisItEngine',add_help=False)
         ap.add_argument('--sim-file',type=str,default=self.__SimFile)
+        ap.add_argument('--trace-file',default=self.__TraceFile, action='store_true')
         ap.add_argument('--interact',default=interact, action='store_true')
         ap.add_argument('--monitor',default=monitor, action='store_true')
         ap.add_argument('--batch',default=batch, action='store_true')
         opts = vars(ap.parse_known_args(args)[0])
         self.__SimFile = os.path.abspath(opts['sim_file'])
+        self.__TraceFile = opts['trace_file']
         interact = opts['interact']
         monitor = opts['monitor']
         batch = opts['batch']
@@ -149,33 +149,25 @@ class WarpVisItEngine:
         self.__UpdateVisItGUI = bool(interactive)
 
     #-------------------------------------------------------------------------
-    def Initalize(self, simName='Warp', simComment=None, simPath=None,
-        traceFile=None, engineOpts='', viewerOpts=['-nowin']):
+    def Initalize(self, engineOpts=''):
         """
         Perform the initial setup of VisIt to include the libsim module
         with the simulation.
         """
         pDebug('WarpVisItEngine::Initialize')
-        if not simPath:
-            simPath = os.getcwd()
 
         simV2.VisItSetDirectory(self.__Env.GetRoot())
 
-        if traceFile:
-            simV2.VisItOpenTraceFile(traceFile)
-            self.__HasTrace = True
+        if self.__TraceFile:
+            simV2.VisItOpenTraceFile('%d.trace'%(self.__CommRank))
 
         if engineOpts:
+            pDebug('Using options %s'%(engineOpts))
             simV2.VisItSetOptions(engineOpts);
 
         if self.__CommRank == 0:
             if not simV2.VisItInitializeSocketAndDumpSimFile(
-                  simName,
-                  simComment,
-                  simPath,
-                  None,
-                  None,
-                  self.__SimFile):
+                  'WarpVisIt', None, os.getcwd(), None, None, self.__SimFile):
                 pError('VisIt initialization failed')
                 return False
 
@@ -186,7 +178,7 @@ class WarpVisItEngine:
         """
         Finalize VisIt libsim, cleanup, etc
         """
-        if self.__HasTrace:
+        if self.__TraceFile:
             simV2.VisItCloseTraceFile()
         return
 
