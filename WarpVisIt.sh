@@ -53,6 +53,11 @@ do
             CLI=1
             ;;
 
+        --batch)
+            ARGS+=("$i")
+            CLI=2
+            ;;
+
         --help)
             HELP=1
             ;;
@@ -104,12 +109,15 @@ fi
 if [[ -n "$CLI" ]]
 then
     echo -n "starting cli..."
-    export WARPVISIT_CLI=1
     python ${WARPVISIT_INSTALL}/WarpVisItCLIMain.py "${ARGS[@]}" &
     CLI_PID=$!
     echo $CLI_PID
-    trap "echo stopping cli $CLI_PID...; kill $CLI_PID; exit;" SIGHUP SIGINT SIGTERM EXIT
-    unset WARPVISIT_CLI
+    if [[ "$CLI" == "1" ]]
+    then
+        wait $CLI_PID
+    else
+        trap "echo stopping cli $CLI_PID...; kill $CLI_PID; exit;" SIGHUP SIGINT SIGTERM EXIT
+    fi
 fi
 if [[ -z "$NUM_PROCS" ]]
 then
