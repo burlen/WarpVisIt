@@ -37,7 +37,6 @@ do
             fi
             ;;
 
-
         --gdb)
             GDB=1
             ;;
@@ -65,11 +64,6 @@ do
     esac
 done
 
-if [[ -e "$WARPVISIT_SIM2_FILE" ]]
-then
-    echo "WARNING: Found sim2 file named $WARPVISIT_SIM2_FILE. deleting it."
-    rm $WARPVISIT_SIM2_FILE
-fi
 
 if [[ -z "$WARPVISIT_INSTALL" ]]
 then

@@ -103,9 +103,14 @@ class WarpVisItCLI:
         for arg in args:
             visit.AddArgument(arg)
 
-        #visit.SetDebugLevel('1')
         visit.Launch()
         ok = visit.OpenDatabase(self.__SimFile)
+
+        # rm the sim file. if left hanging around
+        # it could cause the next run to fail and
+        # we don't need it after we've opened it
+        if ok:
+            os.unlink(self.__SimFile)
 
         while ok:
             time.sleep(500)
@@ -114,7 +119,7 @@ class WarpVisItCLI:
 
         # CLI is finished
         pError('CLI failed to launch')
-        return
+        return False
 
     #-------------------------------------------------------------------------
     def Finalize(self):
