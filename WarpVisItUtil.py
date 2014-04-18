@@ -9,7 +9,7 @@ def pStatus(msg):
     Rank 0 prints the message to sderr
     """
     if parallel.get_rank() == 0:
-        tstr = time.strftime("%H:%M:%S", time.gmtime())
+        tstr = time.strftime("%H:%M:%S", time.localtime())
         sys.stderr.write('=====: %d %s %s \n'%(parallel.get_rank(), tstr, msg))
         sys.stderr.flush()
     return
@@ -19,7 +19,7 @@ def pDebug(msg):
     """
     Print an debug message to stderr (if the following line is not commented)
     """
-    #tstr = time.strftime("%H:%M:%S", time.gmtime())
+    #tstr = time.strftime("%H:%M:%S", time.localtime())
     #sys.stderr.write('=====: %d %s %s \n'%(parallel.get_rank(), tstr, msg))
     #sys.stderr.flush()
     return
@@ -27,7 +27,7 @@ def pDebug(msg):
 #-----------------------------------------------------------------------------
 def pError(msg):
     """print an error message to stderr"""
-    tstr = time.strftime("%H:%M:%S", time.gmtime())
+    tstr = time.strftime("%H:%M:%S", time.localtime())
     sys.stderr.write('Error: %d %s %s\n'%(parallel.get_rank(), tstr, msg))
     sys.stderr.flush()
     return
