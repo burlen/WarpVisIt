@@ -65,34 +65,34 @@ class WarpVisItSimulation(object):
         Initialize the object and optionaly process common command
         line arguments.
         """
-        self.__ScriptDir = os.getenv('WARPVISIT_SCRIPT_DIR')
-        if not self.__ScriptDir:
-            self.__ScriptDir = ''
-        self.__Start = 0
-        self.__Stop = 500
-        self.__Step = 100
-        self.__Plot = 100
-        self.__RenderScripts = None
-        self.__HaveRenderScripts = False
+        self._ScriptDir = os.getenv('WARPVISIT_SCRIPT_DIR')
+        if not self._ScriptDir:
+            self._ScriptDir = ''
+        self._Start = 0
+        self._Stop = 500
+        self._Step = 100
+        self._Plot = 100
+        self._RenderScripts = None
+        self._HaveRenderScripts = False
 
         # parse command line args
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='WarpVisItSimulation',add_help=False)
-        ap.add_argument('--script-dir',type=str,default=self.__ScriptDir)
-        ap.add_argument('--start',type=int,default=self.__Start)
-        ap.add_argument('--stop',type=int,default=self.__Stop)
-        ap.add_argument('--step',type=int,default=self.__Step)
-        ap.add_argument('--plot',type=int,default=self.__Plot)
+        ap.add_argument('--script-dir',type=str,default=self._ScriptDir)
+        ap.add_argument('--start',type=int,default=self._Start)
+        ap.add_argument('--stop',type=int,default=self._Stop)
+        ap.add_argument('--step',type=int,default=self._Step)
+        ap.add_argument('--plot',type=int,default=self._Plot)
         opts = vars(ap.parse_known_args(args)[0])
-        self.__ScriptDir = os.path.abspath(opts['script_dir'])
-        self.__Start = opts['start']
-        self.__Stop = opts['stop']
-        self.__Step = opts['step']
-        self.__Plot = opts['plot']
+        self._ScriptDir = os.path.abspath(opts['script_dir'])
+        self._Start = opts['start']
+        self._Stop = opts['stop']
+        self._Step = opts['step']
+        self._Plot = opts['plot']
 
         # handle special case for no plots.
-        if self.__Plot == 0:
-            self.__RenderScripts = {}
-            self.__HaveRenderScripts = True
+        if self._Plot == 0:
+            self._RenderScripts = {}
+            self._HaveRenderScripts = True
 
         return
 
@@ -126,26 +126,26 @@ class WarpVisItSimulation(object):
         itself.
         """
         # return the disctionary
-        if self.__HaveRenderScripts:
-            return self.__RenderScripts
+        if self._HaveRenderScripts:
+            return self._RenderScripts
 
         # transform the dictionary values from source file names
         # into source code.
-        if self.__RenderScripts is None:
+        if self._RenderScripts is None:
             pError('RenderScripts uninitialized')
             return {}
 
-        for key,fileName in self.__RenderScripts.iteritems():
-            if not self.__ScriptDir is None:
-                fileName = os.path.join(self.__ScriptDir,fileName)
+        for key,fileName in self._RenderScripts.iteritems():
+            if not self._ScriptDir is None:
+                fileName = os.path.join(self._ScriptDir,fileName)
             f = open(fileName)
             code = f.read()
             f.close()
-            self.__RenderScripts[key] = code
+            self._RenderScripts[key] = code
 
-        self.__HaveRenderScripts = True
+        self._HaveRenderScripts = True
 
-        return self.__RenderScripts
+        return self._RenderScripts
 
     #------------------------------------------------------------------------
     def GetActiveRenderScripts(self):
@@ -159,7 +159,7 @@ class WarpVisItSimulation(object):
         passed on the command line via --plot option or by calling
         SetPlotInterval.
         """
-        if (warp.warp.top.it > 0) and (warp.warp.top.it%self.__Plot == 0):
+        if (warp.warp.top.it > 0) and (warp.warp.top.it%self._Plot == 0):
             return self.GetRenderScripts().keys()
         else:
             return []
@@ -170,7 +170,7 @@ class WarpVisItSimulation(object):
         Advance the simulation n steps, where n can be passed on the
         command line via --step option or by calling SetStepInterval.
         """
-        warp.step(self.__Step)
+        warp.step(self._Step)
         return
 
     #------------------------------------------------------------------------
@@ -181,7 +181,7 @@ class WarpVisItSimulation(object):
         where n can be passed on the command line via the --stop
         option or by calling SetStopIteration.
         """
-        return warp.warp.top.it < self.__Stop
+        return warp.warp.top.it < self._Stop
 
 
     #------------------------------------------------------------------------
@@ -201,7 +201,7 @@ class WarpVisItSimulation(object):
         This implementation takes n steps, where n may be passed on the
         command line via the --start option, or by calling SetStartIteration.
         """
-        warp.step(self.__Start)
+        warp.step(self._Start)
         return
 
     # the following helper functions support the default implementation
@@ -212,9 +212,9 @@ class WarpVisItSimulation(object):
         Append a render script to the dictionary. This should be called
         any number of times before Initialize runs.
         """
-        if self.__RenderScripts is None:
-            self.__RenderScripts = {}
-        self.__RenderScripts[key] = fileName
+        if self._RenderScripts is None:
+            self._RenderScripts = {}
+        self._RenderScripts[key] = fileName
         return
 
     #-------------------------------------------------------------------------
@@ -222,7 +222,7 @@ class WarpVisItSimulation(object):
         """
         Set the number of simulation steps to take before visualization
         """
-        self.__StartIteration = it
+        self._StartIteration = it
         return
 
     #-------------------------------------------------------------------------
@@ -230,7 +230,7 @@ class WarpVisItSimulation(object):
         """
         Set the simulation iteration to stop at.
         """
-        self.__StopIteration = it
+        self._StopIteration = it
         return
 
     #-------------------------------------------------------------------------
@@ -238,7 +238,7 @@ class WarpVisItSimulation(object):
         """
         Set the number of iterations the simulation advances per update.
         """
-        self.__Step = it
+        self._Step = it
         return
 
     #-------------------------------------------------------------------------
@@ -246,5 +246,5 @@ class WarpVisItSimulation(object):
         """
         Set the number of iterations between visualizations.
         """
-        self.__Plot = it
+        self._Plot = it
         return

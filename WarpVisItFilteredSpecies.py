@@ -25,13 +25,16 @@ class WarpVisItFilteredSpecies(object):
 
         Attributes:
 
-            __Species : The species object to which the filter is applied to
-            __FilterFunc : The filter funtion
-            __FilterArgs : Additional parameters for the filter function
-            __IDs : List of selected ids to avoid repeated evalutation of the filter.
-            __Key : Timestep key when the filter was last evaluated. Used to check __Ids.
+          Public interface to Warp's Species:
             name : Name for the filtered species, defined by filterName and species.name
             type : Type of the species defined by species.type.
+
+          Private to all but subclasses:
+            _Species : The species object to which the filter is applied to
+            _FilterFunc : The filter funtion
+            _FilterArgs : Additional parameters for the filter function
+            _IDs : List of selected ids to avoid repeated evalutation of the filter.
+            _Key : Timestep key when the filter was last evaluated. Used to check _Ids.
 
 
         """
@@ -42,9 +45,9 @@ class WarpVisItFilteredSpecies(object):
         self.SetFilter(filterFunc)
         self.SetFilterArgs(**kwargs)
         # Define other object variables
-        self.__Species = species
-        self.__Ids = None
-        self.__Key = -1
+        self._Species = species
+        self._Ids = None
+        self._Key = -1
         self.name = species.name + filterName
         self.type = species.type
 
@@ -61,9 +64,9 @@ class WarpVisItFilteredSpecies(object):
             key : Timestep key used to check whether the existing IDs are valid.
 
         """
-        if (self.__Ids is None) or (self.__Key != key):
-            self.__Ids = self.__FilterFunc(self.__Species, **self.__FilterArgs)
-            self.__Key = key
+        if (self._Ids is None) or (self._Key != key):
+            self._Ids = self._FilterFunc(self._Species, **self._FilterArgs)
+            self._Key = key
         return
 
 
@@ -79,10 +82,10 @@ class WarpVisItFilteredSpecies(object):
         """
         # Determine whether we need to bind the filter function to the object
         if inspect.getargspec(filterFunc).args[0] == 'self':
-            self.__FilterFunc = types.MethodType(filterFunc, self)
+            self._FilterFunc = types.MethodType(filterFunc, self)
         else:
-            self.__FilterFunc = filterFunc
-        self.__Ids = None
+            self._FilterFunc = filterFunc
+        self._Ids = None
 
     #------------------------------------------------------------------------
     def SetFilterArgs(self, **kwargs):
@@ -94,8 +97,8 @@ class WarpVisItFilteredSpecies(object):
             **kwargs: Define any keyword parameters used by the filter function
 
         """
-        self.__FilterArgs = kwargs
-        self.__Ids = None
+        self._FilterArgs = kwargs
+        self._Ids = None
 
     #------------------------------------------------------------------------
     def Filter(self, data):
@@ -110,47 +113,47 @@ class WarpVisItFilteredSpecies(object):
 
         """
         self.Update(warp.warp.top.it)
-        if (len(self.__Ids) > 0):
-            return numpy.take(data,self.__Ids)
+        if (len(self._Ids) > 0):
+            return numpy.take(data,self._Ids)
         else:
             return numpy.array([])
 
     #------------------------------------------------------------------------
-    def getpid(self,**kwargs): return self.Filter(self.__Species.getpid(**kwargs))
-    def getn(self,**kwargs): return self.Filter(self.__Species.getn(**kwargs))
-    def getx(self,**kwargs): return self.Filter(self.__Species.getx(**kwargs))
-    def gety(self,**kwargs): return self.Filter(self.__Species.gety(**kwargs))
-    def getz(self,**kwargs): return self.Filter(self.__Species.getz(**kwargs))
-    def getw(self,**kwargs): return self.Filter(self.__Species.getw(**kwargs))
-    def getr(self,**kwargs): return self.Filter(self.__Species.getr(**kwargs))
-    def gettheta(self,**kwargs): return self.Filter(self.__Species.gettheta(**kwargs))
-    def getvtheta(self,**kwargs): return self.Filter(self.__Species.getvtheta(**kwargs))
-    def getetheta(self,**kwargs): return self.Filter(self.__Species.getetheta(**kwargs))
-    def getbtheta(self,**kwargs): return self.Filter(self.__Species.getbtheta(**kwargs))
-    def getvx(self,**kwargs): return self.Filter(self.__Species.getvx(**kwargs))
-    def getvy(self,**kwargs): return self.Filter(self.__Species.getvy(**kwargs))
-    def getvz(self,**kwargs): return self.Filter(self.__Species.getvz(**kwargs))
-    def getvr(self,**kwargs): return self.Filter(self.__Species.getvr(**kwargs))
-    def getux(self,**kwargs): return self.Filter(self.__Species.getux(**kwargs))
-    def getuy(self,**kwargs): return self.Filter(self.__Species.getuy(**kwargs))
-    def getuz(self,**kwargs): return self.Filter(self.__Species.getuz(**kwargs))
-    def getex(self,**kwargs): return self.Filter(self.__Species.getex(**kwargs))
-    def getey(self,**kwargs): return self.Filter(self.__Species.getey(**kwargs))
-    def getez(self,**kwargs): return self.Filter(self.__Species.getez(**kwargs))
-    def geter(self,**kwargs): return self.Filter(self.__Species.geter(**kwargs))
-    def getbx(self,**kwargs): return self.Filter(self.__Species.getbx(**kwargs))
-    def getby(self,**kwargs): return self.Filter(self.__Species.getby(**kwargs))
-    def getbz(self,**kwargs): return self.Filter(self.__Species.getbz(**kwargs))
-    def getbr(self,**kwargs): return self.Filter(self.__Species.getbr(**kwargs))
-    def getxp(self,**kwargs): return self.Filter(self.__Species.getxp(**kwargs))
-    def getyp(self,**kwargs): return self.Filter(self.__Species.getyp(**kwargs))
-    def getzp(self,**kwargs): return self.Filter(self.__Species.getzp(**kwargs))
-    def getrp(self,**kwargs): return self.Filter(self.__Species.getrp(**kwargs))
-    def gettp(self,**kwargs): return self.Filter(self.__Species.gettp(**kwargs))
-    def getgaminv(self,**kwargs): return self.Filter(self.__Species.getgaminv(**kwargs))
-    def getweights(self,**kwargs): return self.Filter(self.__Species.getweights(**kwargs))
-    def getke(self,**kwargs): return self.Filter(self.__Species.getke(**kwargs))
-    def getrank(self,**kwargs): return self.Filter(self.__Species.getrank(**kwargs))
+    def getpid(self,**kwargs): return self.Filter(self._Species.getpid(**kwargs))
+    def getn(self,**kwargs): return self.Filter(self._Species.getn(**kwargs))
+    def getx(self,**kwargs): return self.Filter(self._Species.getx(**kwargs))
+    def gety(self,**kwargs): return self.Filter(self._Species.gety(**kwargs))
+    def getz(self,**kwargs): return self.Filter(self._Species.getz(**kwargs))
+    def getw(self,**kwargs): return self.Filter(self._Species.getw(**kwargs))
+    def getr(self,**kwargs): return self.Filter(self._Species.getr(**kwargs))
+    def gettheta(self,**kwargs): return self.Filter(self._Species.gettheta(**kwargs))
+    def getvtheta(self,**kwargs): return self.Filter(self._Species.getvtheta(**kwargs))
+    def getetheta(self,**kwargs): return self.Filter(self._Species.getetheta(**kwargs))
+    def getbtheta(self,**kwargs): return self.Filter(self._Species.getbtheta(**kwargs))
+    def getvx(self,**kwargs): return self.Filter(self._Species.getvx(**kwargs))
+    def getvy(self,**kwargs): return self.Filter(self._Species.getvy(**kwargs))
+    def getvz(self,**kwargs): return self.Filter(self._Species.getvz(**kwargs))
+    def getvr(self,**kwargs): return self.Filter(self._Species.getvr(**kwargs))
+    def getux(self,**kwargs): return self.Filter(self._Species.getux(**kwargs))
+    def getuy(self,**kwargs): return self.Filter(self._Species.getuy(**kwargs))
+    def getuz(self,**kwargs): return self.Filter(self._Species.getuz(**kwargs))
+    def getex(self,**kwargs): return self.Filter(self._Species.getex(**kwargs))
+    def getey(self,**kwargs): return self.Filter(self._Species.getey(**kwargs))
+    def getez(self,**kwargs): return self.Filter(self._Species.getez(**kwargs))
+    def geter(self,**kwargs): return self.Filter(self._Species.geter(**kwargs))
+    def getbx(self,**kwargs): return self.Filter(self._Species.getbx(**kwargs))
+    def getby(self,**kwargs): return self.Filter(self._Species.getby(**kwargs))
+    def getbz(self,**kwargs): return self.Filter(self._Species.getbz(**kwargs))
+    def getbr(self,**kwargs): return self.Filter(self._Species.getbr(**kwargs))
+    def getxp(self,**kwargs): return self.Filter(self._Species.getxp(**kwargs))
+    def getyp(self,**kwargs): return self.Filter(self._Species.getyp(**kwargs))
+    def getzp(self,**kwargs): return self.Filter(self._Species.getzp(**kwargs))
+    def getrp(self,**kwargs): return self.Filter(self._Species.getrp(**kwargs))
+    def gettp(self,**kwargs): return self.Filter(self._Species.gettp(**kwargs))
+    def getgaminv(self,**kwargs): return self.Filter(self._Species.getgaminv(**kwargs))
+    def getweights(self,**kwargs): return self.Filter(self._Species.getweights(**kwargs))
+    def getke(self,**kwargs): return self.Filter(self._Species.getke(**kwargs))
+    def getrank(self,**kwargs): return self.Filter(self._Species.getrank(**kwargs))
 
 
 
