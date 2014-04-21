@@ -239,7 +239,7 @@ def plotPColorElec1Uz(winId):
 
     SetActiveWindow(winId)
 
-    AddPlot("Pseudocolor", "Electron-1/uz", 1, 0)
+    AddPlot("Pseudocolor", "Electron-halo/uz", 1, 0)
     plotId = GetNumPlots() - 1
     SetActivePlots(plotId)
 
@@ -260,7 +260,7 @@ def plotPColorElec1Uz(winId):
     ElevateAtts.maxFlag = 0
     ElevateAtts.max = 5e+08
     ElevateAtts.zeroFlag = 0
-    ElevateAtts.variable = "Electron-1/ux"
+    ElevateAtts.variable = "Electron-halo/ux"
     SetOperatorOptions(ElevateAtts, 0)
 
     PseudocolorAtts = PseudocolorAttributes()
@@ -440,7 +440,7 @@ def plotPColorElec1XZUz(winId):
 
     SetActiveWindow(winId)
 
-    AddPlot("Pseudocolor", "Electron-1/uz", 1, 0)
+    AddPlot("Pseudocolor", "Electron-halo/uz", 1, 0)
     plotId = GetNumPlots() - 1
     SetActivePlots(plotId)
 
@@ -450,7 +450,7 @@ def plotPColorElec1XZUz(winId):
     ProjectAtts.vectorTransformMethod = ProjectAtts.AsDirection  # None, AsPoint, AsDisplacement, AsDirection
     SetOperatorOptions(ProjectAtts, 0)
 
-    DefineScalarExpression("Electron-1-uz", "<Electron-1/uz>*1e-14")
+    DefineScalarExpression("Electron-halo-uz", "<Electron-halo/uz>*1e-14")
 
     AddOperator("Elevate", 0)
     ElevateAtts = ElevateAttributes()
@@ -463,7 +463,7 @@ def plotPColorElec1XZUz(winId):
     ElevateAtts.maxFlag = 0
     ElevateAtts.max = 7e+08
     ElevateAtts.zeroFlag = 0
-    ElevateAtts.variable = "Electron-1-uz"
+    ElevateAtts.variable = "Electron-halo-uz"
     SetOperatorOptions(ElevateAtts, 0)
 
     PseudocolorAtts = PseudocolorAttributes()
@@ -664,7 +664,7 @@ def saveWindows(imw,imh):
 # do the vis!
 SetWindowLayout(1)
 elec0 = meshValid(1,'Electron-0')
-elec1 = meshValid(1,'Electron-1')
+elec1 = meshValid(1,'Electron-halo')
 
 SetWindowLayout(4)
 i=1
@@ -685,7 +685,7 @@ if elec1:
     plotPColorElec1Uz(3)
     plotPColorElec1XZUz(4)
 else:
-    meshPlot(3,'Electron-1')
+    meshPlot(3,'Electron-halo')
 
 saveWindows(1920,1080)
 
