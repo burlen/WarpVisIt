@@ -28,15 +28,6 @@ do
             fi
             ;;
 
-        --visit-install=*)
-            VISIT_INSTALL=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
-            if [ ! -d "$VISIT_INSTALL" ]
-            then
-                echo "ERROR: $i not found."
-                exit
-            fi
-            ;;
-
         --gdb)
             GDB=1
             ;;
@@ -75,18 +66,8 @@ then
     WARPVISIT_INSTALL=`pwd`
 fi
 
-if [[ -z "$VISIT_INSTALL" ]]
-then
-    VISIT_INSTALL=`which visit`
-    if [[ -n "$VISIT_INSTALL" ]]
-    then
-        VISIT_INSTALL=`dirname $VISIT_INSTALL`
-    fi
-fi
-if [[ -n "$VISIT_INSTALL" ]]
-then
-    source ${WARPVISIT_INSTALL}/WarpVisItEnv.sh $VISIT_INSTALL
-fi
+# configure the environment
+source ${WARPVISIT_INSTALL}/WarpVisItEnv.sh $@
 
 if [[ -n "$HELP" ]]
 then
