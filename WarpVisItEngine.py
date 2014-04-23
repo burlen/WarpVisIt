@@ -34,6 +34,8 @@ class WarpVisItEngine:
         self.__VisItBlockingComm = True
         self.__CommandQueue = []
         self.__EngineOpts = None
+        self.__StepCount = 0
+        self.__ProbeMem = 0
 
         # parse command line args
         interact = getEnvVar('WARPVISIT_MODE_INTERACT',bool,False)
@@ -47,6 +49,7 @@ class WarpVisItEngine:
         ap.add_argument('--monitor',default=monitor, action='store_true')
         ap.add_argument('--batch',default=batch, action='store_true')
         ap.add_argument('--engine-opts',type=str,default=None)
+        ap.add_argument('--probe-mem',type=int,default=self.__ProbeMem)
         opts = vars(ap.parse_known_args(args)[0])
         self.__SimFile = os.path.abspath(opts['sim_file'])
         self.__TraceFile = opts['trace_file']
@@ -54,6 +57,7 @@ class WarpVisItEngine:
         monitor = opts['monitor']
         batch = opts['batch']
         self.__EngineOpts = opts['engine_opts']
+        self.__ProbeMem = opts['probe_mem']
 
         if sum((interact,monitor,batch))>1:
             raise RuntimeError('--interact, --monitor, --batch are mutually exclusive')
@@ -336,12 +340,13 @@ class WarpVisItEngine:
         """
         process simulation control commands.
 
+        adv       : take a step and intiate the next step
         step      : take one simulation step and wait for more commands
         run       : make sequential steps and poll for commands
         continue  : like run but do not update plots
         pause     : finish the current step and wait for more commands
         end       : shut everything down
-        endSynchronous : internal use only, for synchronziation between sim and vis
+        endSyn    : internal use only, for synchronziation between sim and vis
 
         """
         callModeMethod = lambda f : getattr(self, f+self.__Mode)()
@@ -352,7 +357,7 @@ class WarpVisItEngine:
 
         # queue commands while in synchronous mode
         if self.GetSynchronous():
-            if cmd == 'endSynchronous':
+            if cmd == 'endSyn':
                 self.SetSynchronous(False)
                 self.__CommandQueue.pop()
             else:
@@ -371,6 +376,7 @@ class WarpVisItEngine:
 
             if qcmd == 'adv':
                 self.StepSimulation()
+                self.ProbeMemory()
                 callModeMethod('Update')
 
             elif (qcmd == 'end'):
@@ -433,7 +439,7 @@ class WarpVisItEngine:
                 self.SetSynchronous(True)
                 source = scripts[script]
                 source += ("\nfrom visit import visit\n"
-                           "visit.SendSimulationCommand('localhost', '%s', 'endSynchronous')\n")%(
+                           "visit.SendSimulationCommand('localhost', '%s', 'endSyn')\n")%(
                           self.__SimFile)
                 simV2.VisItExecuteCommand(source)
 
@@ -446,8 +452,20 @@ class WarpVisItEngine:
 
         self.__Simulation.Advance()
         simV2.VisItTimeStepChanged()
-
+        self.__StepCount += 1
         return True
+
+    #-------------------------------------------------------------------------
+    def ProbeMemory(self,force=False):
+        """ """
+        # report memory consumption
+        if force or (self.__ProbeMem > 0) and ((self.__StepCount%self.__ProbeMem) == 0):
+            ret,vm,rss = simV2.VisItGetMemory()
+            vmn = parallel.globalmin(vm)
+            vmx = parallel.globalmax(vm)
+            vme = parallel.globalave(vm)
+            pStatus('MemUse=%g %g %g'%(vmn,vme,vmx))
+        return
 
     #-------------------------------------------------------------------------
     def Disconnect(self):
@@ -483,6 +501,7 @@ class WarpVisItEngine:
         self.__VisItBlockingComm = True
         self.__Synchronous = 0
         self.__CommandQueue = []
+        self.ProbeMemory(True)
         return
 
     #-------------------------------------------------------------------------
@@ -555,6 +574,7 @@ class WarpVisItEngine:
                 # sim is not finished
                 # take a step
                 self.StepSimulation()
+                self.ProbeMemory()
             else:
                 # sim is finished
                 # send command to end the simulation
