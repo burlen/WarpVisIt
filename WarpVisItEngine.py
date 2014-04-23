@@ -92,7 +92,8 @@ class WarpVisItEngine:
            "--interact : WARPVISIT_MODE_INTERACT : Wait for VisIt and run with VisIt control\n"
            "--monitor : WARPVISIT_MODE_MONITOR : Listen for while running, continue without VisIt\n"
            "--batch : WARPVISIT_MODE_BATCH : Run without VisIt\n"
-           "--engine-opts : : Command line options to pass into the VisIt engine\n")
+           "--engine-opts : : Command line options to pass into the VisIt engine\n"
+           "--probe-mem : : Number of sim steps between memory probes\n")
 
 
     #-------------------------------------------------------------------------
