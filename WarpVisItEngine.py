@@ -192,6 +192,12 @@ class WarpVisItEngine:
         """
         if self._TraceFile:
             simV2.VisItCloseTraceFile()
+
+        # rm this file as if its left around
+        # it will cause next cli to fail
+        if os.path.exists(self._SimFile):
+            os.unlink(self._SimFile)
+
         return
 
     #-------------------------------------------------------------------------
