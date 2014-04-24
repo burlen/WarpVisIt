@@ -248,3 +248,10 @@ class WarpVisItSimulation(object):
         """
         self._Plot = it
         return
+
+    #-------------------------------------------------------------------------
+    def GetNamespace(self):
+        """ Get the warp module that the instance has modified """
+        gn = {}
+        gn['warp'] = warp
+        return gn

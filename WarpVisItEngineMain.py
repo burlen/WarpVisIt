@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     # create a visit engine
     engine = WarpVisItEngine(sys.argv)
-    engine.Initalize()
     engine.SetSimulation(simulation)
+    engine.Initalize()
 
     # run
     status = engine.EventLoop()
