@@ -500,14 +500,14 @@ class InteractBehavior(object):
             self.__Engine.RequestShutdown()
 
         elif qcmd == 'pause':
-            pStatus('pause')
+            pStatus('WarpVisItEngine pause')
             self.__Engine._VisItBlockingComm = True
             self.__Engine._VisItControlStepping = True
             self.__Engine._UpdateVisItGUI = True
             self.Update()
 
         elif qcmd == 'step':
-            pStatus('step')
+            pStatus('WarpVisItEngine step')
             self.__Engine._VisItBlockingComm = True
             self.__Engine._VisItControlStepping = True
             self.__Engine._UpdateVisItGUI = True
@@ -515,13 +515,13 @@ class InteractBehavior(object):
             self.Update()
 
         elif qcmd == 'run':
-            pStatus('run')
+            pStatus('WarpVisItEngine run')
             self.__Engine._VisItBlockingComm = False
             self.__Engine._VisItControlStepping = False
             self.__Engine._UpdateVisItGUI = True
 
         elif qcmd == 'continue':
-            pStatus('continue')
+            pStatus('WarpVisItEngine continue')
             self.__Engine._VisItBlockingComm = False
             self.__Engine._VisItControlStepping = False
             self.__Engine._UpdateVisItGUI = False
@@ -765,6 +765,7 @@ class PromptBehavior(object):
                 self.__Engine._Synchronous = 0
                 self.__Engine._CommandQueue = []
             else:
+                # exec command
                 try:
                     exec qcmd in self.__Globals
                 except:
