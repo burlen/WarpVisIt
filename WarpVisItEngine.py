@@ -17,25 +17,23 @@ class WarpVisItEngine:
     #-------------------------------------------------------------------------
     def __init__(self, args):
         """ """
-        callModeMethod = lambda f : getattr(self, f+self.__Mode)()
-
-        self.__CommRank = parallel.get_rank()
-        self.__CommSize = parallel.number_of_PE()
-        self.__Env = VisItEnv()
-        self.__SimFile = getEnvVar('WARPVISIT_SIM_FILE',str,'WarpVisIt.sim2')
-        self.__TraceFile = getEnvVar('WARPVISIT_TRACE_FILE',bool,False)
-        self.__Simulation = None
-        self.__ShutdownRequested = False
-        self.__Connected = False
-        self.__Synchronous = 0
-        self.__Mode = 'Batch'
-        self.__UpdateVisItGUI = True
-        self.__VisItControlStepping = True
-        self.__VisItBlockingComm = True
-        self.__CommandQueue = []
-        self.__EngineOpts = None
-        self.__StepCount = 0
-        self.__ProbeMem = 0
+        self._CommRank = parallel.get_rank()
+        self._CommSize = parallel.number_of_PE()
+        self._Env = VisItEnv()
+        self._SimFile = getEnvVar('WARPVISIT_SIM_FILE',str,'WarpVisIt.sim2')
+        self._TraceFile = getEnvVar('WARPVISIT_TRACE_FILE',bool,False)
+        self._Simulation = None
+        self._ShutdownRequested = False
+        self._Connected = False
+        self._Synchronous = 0
+        self._Behavior = BatchBehavior(self)
+        self._UpdateVisItGUI = True
+        self._VisItControlStepping = True
+        self._VisItBlockingComm = True
+        self._CommandQueue = []
+        self._EngineOpts = None
+        self._StepCount = 0
+        self._ProbeMem = 0
 
         # parse command line args
         interact = getEnvVar('WARPVISIT_MODE_INTERACT',bool,False)
@@ -43,38 +41,42 @@ class WarpVisItEngine:
         batch = getEnvVar('WARPVISIT_MODE_BATCH',bool,False)
 
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='WarpVisItEngine',add_help=False)
-        ap.add_argument('--sim-file',type=str,default=self.__SimFile)
-        ap.add_argument('--trace-file',default=self.__TraceFile, action='store_true')
+        ap.add_argument('--sim-file',type=str,default=self._SimFile)
+        ap.add_argument('--trace-file',default=self._TraceFile, action='store_true')
         ap.add_argument('--interact',default=interact, action='store_true')
         ap.add_argument('--monitor',default=monitor, action='store_true')
+        ap.add_argument('--prompt',default=False, action='store_true')
         ap.add_argument('--batch',default=batch, action='store_true')
         ap.add_argument('--engine-opts',type=str,default=None)
-        ap.add_argument('--probe-mem',type=int,default=self.__ProbeMem)
+        ap.add_argument('--probe-mem',type=int,default=self._ProbeMem)
         opts = vars(ap.parse_known_args(args)[0])
-        self.__SimFile = os.path.abspath(opts['sim_file'])
-        self.__TraceFile = opts['trace_file']
+        self._SimFile = os.path.abspath(opts['sim_file'])
+        self._TraceFile = opts['trace_file']
         interact = opts['interact']
         monitor = opts['monitor']
+        prompt = opts['prompt']
         batch = opts['batch']
-        self.__EngineOpts = opts['engine_opts']
-        self.__ProbeMem = opts['probe_mem']
+        self._EngineOpts = opts['engine_opts']
+        self._ProbeMem = opts['probe_mem']
 
-        if sum((interact,monitor,batch))>1:
+        if sum((interact,monitor,prompt,batch))>1:
             raise RuntimeError('--interact, --monitor, --batch are mutually exclusive')
         if interact:
-            self.__Mode = 'Interact'
+            self._Behavior = InteractBehavior(self)
         elif monitor:
-            self.__Mode = 'Monitor'
+            self._Behavior = MonitorBehavior(self)
+        elif prompt:
+            self._Behavior = PromptBehavior(self)
         else:
-            self.__Mode = 'Batch'
+            self._Behavior = BatchBehavior(self)
 
-        callModeMethod('Initialize')
+        self._Behavior.Initialize()
 
         # initialize libsim
-        simV2.VisItSetDirectory(self.__Env.GetRoot())
+        simV2.VisItSetDirectory(self._Env.GetRoot())
         simV2.VisItSetupEnvironment()
-        simV2.VisItSetParallelRank(self.__CommRank)
-        simV2.VisItSetParallel(self.__CommSize > 1)
+        simV2.VisItSetParallelRank(self._CommRank)
+        simV2.VisItSetParallel(self._CommSize > 1)
         simV2.VisItSetBroadcastIntFunction(broadcastInt)
         simV2.VisItSetBroadcastStringFunction(broadcastString)
 
@@ -99,26 +101,26 @@ class WarpVisItEngine:
     #-------------------------------------------------------------------------
     def SetSimulation(self, simulation):
         """Set the simulation object"""
-        self.__Simulation = simulation
+        self._Simulation = simulation
 
     #-------------------------------------------------------------------------
     def RequestShutdown(self):
         """Request shutdown"""
-        self.__VisItControlStepping = False
-        self.__VisItBlockingComm = False
-        self.__UpdateVisItGUI = False
-        self.__ShutdownRequested = True
+        self._VisItControlStepping = False
+        self._VisItBlockingComm = False
+        self._UpdateVisItGUI = False
+        self._ShutdownRequested = True
 
     #-------------------------------------------------------------------------
     def SetVisItControlStepping(self, v):
         """Select between interactive/non-interactive simulation stepping"""
-        self.__VisItControlStepping = bool(v)
-        self.__VisItBlockingComm = bool(v)
+        self._VisItControlStepping = bool(v)
+        self._VisItBlockingComm = bool(v)
 
     #-------------------------------------------------------------------------
     def GetVisItControlStepping(self, v):
         """Select between interactive/non-interactive simulation stepping"""
-        return self.__VisItControlStepping
+        return self._VisItControlStepping
 
     #-------------------------------------------------------------------------
     def SetSynchronous(self, v):
@@ -128,16 +130,16 @@ class WarpVisItEngine:
         in the same plots.
         """
         if bool(v):
-            self.__Synchronous += 1
+            self._Synchronous += 1
         else:
-            self.__Synchronous -= 1
-        if self.__Synchronous < 0:
-            self.__Synchronous = 0
+            self._Synchronous -= 1
+        if self._Synchronous < 0:
+            self._Synchronous = 0
 
     #-------------------------------------------------------------------------
     def GetSynchronous(self):
         """True when VisIt is actively rendering"""
-        return self.__Synchronous > 0
+        return self._Synchronous > 0
 
     #-------------------------------------------------------------------------
     def SetSimFile(self, fileName):
@@ -145,18 +147,18 @@ class WarpVisItEngine:
         Set the .sim2 file name. If one is not set the default is
         '/cwd/Warp.sim2'
         """
-        self.__SimFile = fileName
+        self._SimFile = fileName
 
     #-------------------------------------------------------------------------
     def GetSimFile(self):
         """Return the .sim2 file name"""
-        return self.__SimFile
+        return self._SimFile
 
     #-------------------------------------------------------------------------
     def SetInteractive(self, interactive):
         """Set true if the simulation should connect to VisIt"""
-        self.__Interactive = bool(interactive)
-        self.__UpdateVisItGUI = bool(interactive)
+        self._Interactive = bool(interactive)
+        self._UpdateVisItGUI = bool(interactive)
 
     #-------------------------------------------------------------------------
     def Initalize(self, engineOpts=''):
@@ -166,18 +168,18 @@ class WarpVisItEngine:
         """
         if __debug__: pDebug('WarpVisItEngine::Initialize')
 
-        simV2.VisItSetDirectory(self.__Env.GetRoot())
+        simV2.VisItSetDirectory(self._Env.GetRoot())
 
-        if self.__TraceFile:
-            simV2.VisItOpenTraceFile('%d.trace'%(self.__CommRank))
+        if self._TraceFile:
+            simV2.VisItOpenTraceFile('%d.trace'%(self._CommRank))
 
-        if self.__EngineOpts:
-            if __debug__: pDebug('Using options %s'%(self.__EngineOpts))
-            simV2.VisItSetOptions(self.__EngineOpts);
+        if self._EngineOpts:
+            if __debug__: pDebug('Using options %s'%(self._EngineOpts))
+            simV2.VisItSetOptions(self._EngineOpts);
 
-        if self.__CommRank == 0:
+        if self._CommRank == 0:
             if not simV2.VisItInitializeSocketAndDumpSimFile(
-                  'WarpVisIt', None, os.getcwd(), None, None, self.__SimFile):
+                  'WarpVisIt', None, os.getcwd(), None, None, self._SimFile):
                 pError('VisIt initialization failed')
                 return False
 
@@ -188,7 +190,7 @@ class WarpVisItEngine:
         """
         Finalize VisIt libsim, cleanup, etc
         """
-        if self.__TraceFile:
+        if self._TraceFile:
             simV2.VisItCloseTraceFile()
         return
 
@@ -202,15 +204,14 @@ class WarpVisItEngine:
         doConnect = lambda e: e==1
         doInternal = lambda e: e==2
         masterRank = lambda r: r==0
-        onErrorContinue = lambda : self.__Mode=='Monitor'
-        callModeMethod = lambda f : getattr(self, f+self.__Mode)()
+        onErrorContinue = lambda : self._Behavior=='Monitor'
 
         if __debug__: pDebug('WarpVisItEngine::EventLoop')
 
         while 1:
             # test or wait for incomming communication.
-            if masterRank(self.__CommRank):
-                event = simV2.VisItDetectInput(self.__VisItBlockingComm, -1)
+            if masterRank(self._CommRank):
+                event = simV2.VisItDetectInput(self._VisItBlockingComm, -1)
                 parallel.broadcast(event)
             else:
                 event = parallel.broadcast(0)
@@ -222,7 +223,7 @@ class WarpVisItEngine:
             if doError(event):
                 # the VisIt viewer disconnected.
                 pError('An communication error was detected')
-                callModeMethod('Initialize')
+                self._Behavior.Initialize()
                 if onErrorContinue():
                     continue
                 else:
@@ -234,18 +235,18 @@ class WarpVisItEngine:
                 # it occurs only when VisIt is not in the
                 # middle of processing its own commands.
                 if __debug__: pDebug('update')
-                callModeMethod('Update')
+                self._Behavior.Update()
 
             # internal connection
             elif doConnect(event):
                 if simV2.VisItAttemptToCompleteConnection() == 1:
                     pStatus('WarpVisItEngine connected')
                     self.ConnectLibsim()
-                    callModeMethod('Connect')
-                    callModeMethod('Update')
+                    self._Behavior.Connect()
+                    self._Behavior.Update()
                 else:
                     pError('Connection failed')
-                    callModeMethod('Initialize')
+                    self._Behavior.Initialize()
                     if onErrorContinue():
                         continue
                     else:
@@ -256,7 +257,7 @@ class WarpVisItEngine:
                 if __debug__: pDebug('internal')
                 if not self.CommunicateLibsim():
                     pError('Error while processing internal commands')
-                    callModeMethod('Initialize')
+                    self._Behavior.Initialize()
                     if onErrorContinue():
                         continue
                     else:
@@ -267,10 +268,10 @@ class WarpVisItEngine:
                 pError('unknown command %d'%(event))
 
             # check for asynchronous shutdown request
-            if self.__ShutdownRequested:
+            if self._ShutdownRequested:
                 pStatus('WarpVisItEngine exiting the event loop')
                 simV2.VisItDisconnect()
-                self.__Connected = False
+                self._Connected = False
                 return True
 
             continue
@@ -289,8 +290,8 @@ class WarpVisItEngine:
         simV2.VisItSetGetDomainList(WarpVisItSimV2Db.getDomains, self)
         simV2.VisItSetCommandCallback(commandCallback, self)
         simV2.VisItSetSlaveProcessCallback(slaveProcessCallback)
-        self.__Connected = True
-        self.__VisItBlockingComm = True
+        self._Connected = True
+        self._VisItBlockingComm = True
         return
 
     #-------------------------------------------------------------------------
@@ -303,7 +304,7 @@ class WarpVisItEngine:
 
         if __debug__: pDebug('WarpVisItEngine::ProcessCommands')
 
-        if masterRank(self.__CommRank):
+        if masterRank(self._CommRank):
             if simV2.VisItProcessEngineCommand():
                 if __debug__: pDebug('master success')
                 broadcastSlaveCommand(COMMAND_SUCCESS)
@@ -341,85 +342,30 @@ class WarpVisItEngine:
         """
         process simulation control commands.
 
-        adv       : take a step and intiate the next step
-        step      : take one simulation step and wait for more commands
-        run       : make sequential steps and poll for commands
-        continue  : like run but do not update plots
-        pause     : finish the current step and wait for more commands
-        end       : shut everything down
         endSyn    : internal use only, for synchronziation between sim and vis
 
         """
-        callModeMethod = lambda f : getattr(self, f+self.__Mode)()
-
         if __debug__: pDebug('WarpVisItEngine::ProcessCommand %s'%(cmd))
 
-        self.__CommandQueue.append(cmd)
+        self._CommandQueue.append(cmd)
 
         # queue commands while in synchronous mode
         if self.GetSynchronous():
             if cmd == 'endSyn':
                 self.SetSynchronous(False)
-                self.__CommandQueue.pop()
+                self._CommandQueue.pop()
             else:
                 if __debug__: pDebug('defered %s'%(cmd))
                 return
 
         # now in asynchronous mode
         # process queued commands
-        ncmds = len(self.__CommandQueue)
+        ncmds = len(self._CommandQueue)
         i = 0
         while (i < ncmds):
-            qcmd = self.__CommandQueue.pop()
+            qcmd = self._CommandQueue.pop()
+            self._Behavior.Process(qcmd)
             i += 1
-
-            if __debug__: pDebug('processes %s'%(qcmd))
-
-            if qcmd == 'adv':
-                self.StepSimulation()
-                self.ProbeMemory()
-                callModeMethod('Update')
-
-            elif (qcmd == 'end'):
-                self.RequestShutdown()
-
-            elif qcmd == 'pause':
-                pStatus('WarpVisItEngine pause')
-                self.__VisItBlockingComm = True
-                self.__VisItControlStepping = True
-                self.__UpdateVisItGUI = True
-                callModeMethod('Update')
-
-            elif qcmd == 'step':
-                pStatus('WarpVisItEngine step')
-                self.__VisItBlockingComm = True
-                self.__VisItControlStepping = True
-                self.__UpdateVisItGUI = True
-                self.StepSimulation()
-                callModeMethod('Update')
-
-            elif qcmd == 'run':
-                pStatus('WarpVisItEngine run')
-                self.__VisItBlockingComm = False
-                self.__VisItControlStepping = False
-                self.__UpdateVisItGUI = True
-
-            elif qcmd == 'continue':
-                pStatus('WarpVisItEngine continue')
-                self.__VisItBlockingComm = False
-                self.__VisItControlStepping = False
-                self.__UpdateVisItGUI = False
-
-            elif qcmd == 'disconnect':
-                pStatus('WarpVisItEngine disconnect')
-                self.__VisItBlockingComm = False
-                self.__VisItControlStepping = False
-                self.__UpdateVisItGUI = False
-                self.Disconnect()
-
-            else:
-                pError('Unrecgnozied command %s'%(qcmd))
-
         return
 
     #-------------------------------------------------------------------------
@@ -427,9 +373,9 @@ class WarpVisItEngine:
         """Render simulation data"""
         if __debug__: pDebug('WarpVisItEngine::Render')
 
-        activeScripts = self.__Simulation.GetActiveRenderScripts()
+        activeScripts = self._Simulation.GetActiveRenderScripts()
         if len(activeScripts):
-            scripts = self.__Simulation.GetRenderScripts()
+            scripts = self._Simulation.GetRenderScripts()
             # push rendering scripts for execution
             # while rendering sim must not advance
             # enable synchronous mode for each script
@@ -441,7 +387,7 @@ class WarpVisItEngine:
                 source = scripts[script]
                 source += ("\nfrom visit import visit\n"
                            "visit.SendSimulationCommand('localhost', '%s', 'endSyn')\n")%(
-                          self.__SimFile)
+                          self._SimFile)
                 simV2.VisItExecuteCommand(source)
 
         return True
@@ -451,16 +397,16 @@ class WarpVisItEngine:
         """Drive the simulation through one or more steps"""
         if __debug__: pDebug('WarpVisItEngine::StepSimulation')
 
-        self.__Simulation.Advance()
+        self._Simulation.Advance()
         simV2.VisItTimeStepChanged()
-        self.__StepCount += 1
+        self._StepCount += 1
         return True
 
     #-------------------------------------------------------------------------
     def ProbeMemory(self,force=False):
         """ """
         # report memory consumption
-        if force or (self.__ProbeMem > 0) and ((self.__StepCount%self.__ProbeMem) == 0):
+        if force or (self._ProbeMem > 0) and ((self._StepCount%self._ProbeMem) == 0):
             ret,vm,rss = simV2.VisItGetMemory()
             vmn = parallel.globalmin(vm)
             vmx = parallel.globalmax(vm)
@@ -473,162 +419,385 @@ class WarpVisItEngine:
         """
         Handle VisIt disconnect
         """
-        if self.__Connected:
+        if self._Connected:
             simV2.VisItDisconnect()
-            self.__Connected = False
+            self._Connected = False
         return
 
 
+
+
+
+
+
+
+
+##############################################################################
+class InteractBehavior(object):
+    """Implements interactive behavior"""
     #-------------------------------------------------------------------------
-    def InitializeBatch(self):
-        """
-        Initialize the object for batch mode
-        """
-        self.Disconnect()
-        self.__UpdateVisItGUI = False
-        self.__VisItControlStepping = False
-        self.__VisItBlockingComm = True
-        self.__Synchronous = 0
-        self.__CommandQueue = []
+    def __init__(self, engine):
+        """ """
+        self.__Engine = engine
         return
 
     #-------------------------------------------------------------------------
-    def ConnectBatch(self):
-        """
-        Respond to connect in batch mode
-        """
-        self.__UpdateVisItGUI = False
-        self.__VisItControlStepping = False
-        self.__VisItBlockingComm = True
-        self.__Synchronous = 0
-        self.__CommandQueue = []
-        self.ProbeMemory(True)
-        return
-
-    #-------------------------------------------------------------------------
-    def UpdateBatch(self):
-        """
-        Respond to request for simulation step in batch mode
-        """
-        if not self.GetSynchronous():
-            # not already rendering
-            # render plots for this sim time step
-            if self.__Connected:
-                self.PushRenderScripts()
-
-            # not already rendering
-            # check if the sim is finished
-            if self.__Simulation.Continue():
-                # sim is not finished
-                # send command to take a step
-                self.ProcessCommand('adv')
-
-            else:
-                # sim is finished
-                # send command to end the simulation
-                self.ProcessCommand('end')
-
-
-    #-------------------------------------------------------------------------
-    def InitializeMonitor(self):
-        """
-        Initialize the object for monitor mode
-        """
-        self.Disconnect()
-        self.__UpdateVisItGUI = False
-        self.__VisItControlStepping = False
-        self.__VisItBlockingComm = False
-        self.__Synchronous = 0
-        self.__CommandQueue = []
-        return
-
-    #-------------------------------------------------------------------------
-    def ConnectMonitor(self):
-        """
-        Respond to connect in monitor mode
-        """
-        self.__UpdateVisItGUI = True
-        self.__VisItControlStepping = True
-        self.__VisItBlockingComm = True
-        self.__Synchronous = 0
-        self.__CommandQueue = []
-        return
-
-    #-------------------------------------------------------------------------
-    def UpdateMonitor(self):
-        """
-        Respond to request for simulation step in monitor mode
-        """
-        # interactive update
-        if self.__Connected:
-            # render plot for this sim time step
-            if self.__UpdateVisItGUI:
-                # trigger render of plot defined in the GUI
-                simV2.VisItUpdatePlots()
-
-        # advance the simulation if auto stepping
-        if not self.__VisItControlStepping:
-
-            # not already rendering
-            # check if the sim is finished
-            if self.__Simulation.Continue():
-                # sim is not finished
-                # take a step
-                self.StepSimulation()
-                self.ProbeMemory()
-            else:
-                # sim is finished
-                # send command to end the simulation
-                self.RequestShutdown()
-
-        return
-
-    #-------------------------------------------------------------------------
-    def InitializeInteract(self):
+    def Initialize(self):
         """
         Initialize the object for interact mode
         """
-        self.Disconnect()
-        self.__UpdateVisItGUI = False
-        self.__VisItControlStepping = True
-        self.__VisItBlockingComm = True
-        self.__Synchronous = 0
-        self.__CommandQueue = []
+        self.__Engine.Disconnect()
+        self.__Engine._UpdateVisItGUI = False
+        self.__Engine._VisItControlStepping = True
+        self.__Engine._VisItBlockingComm = True
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
         return
 
     #-------------------------------------------------------------------------
-    def ConnectInteract(self):
+    def Connect(self):
         """
         Connect the object for interact mode
         """
-        self.__UpdateVisItGUI = True
-        self.__VisItControlStepping = True
-        self.__VisItBlockingComm = True
-        self.__Synchronous = 0
-        self.__CommandQueue = []
+        self.__Engine._UpdateVisItGUI = True
+        self.__Engine._VisItControlStepping = True
+        self.__Engine._VisItBlockingComm = True
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
         return
 
     #-------------------------------------------------------------------------
-    def UpdateInteract(self):
+    def Update(self):
         """
         Respond to request for render in interact mode
         """
         # interactive update
-        if self.__Connected:
+        if self.__Engine._Connected:
             # render plot for this sim time step
-            if self.__UpdateVisItGUI:
+            if self.__Engine._UpdateVisItGUI:
                 # trigger render of plot defined in the GUI
                 simV2.VisItUpdatePlots()
 
             # advance the simulation if auto stepping
-            if not self.__VisItControlStepping:
-                self.StepSimulation()
+            if not self.__Engine._VisItControlStepping:
+                self.__Engine.StepSimulation()
+        return
+
+    #-------------------------------------------------------------------------
+    def Process(self, qcmd):
+        """
+        process interact control commands.
+
+        step      : take one simulation step and wait for more commands
+        run       : make sequential steps and poll for commands
+        continue  : like run but do not update plots
+        pause     : finish the current step and wait for more commands
+        end       : shut everything down
+        """
+        if (qcmd == 'end'):
+            self.__Engine.RequestShutdown()
+
+        elif qcmd == 'pause':
+            pStatus('pause')
+            self.__Engine._VisItBlockingComm = True
+            self.__Engine._VisItControlStepping = True
+            self.__Engine._UpdateVisItGUI = True
+            self.Update()
+
+        elif qcmd == 'step':
+            pStatus('step')
+            self.__Engine._VisItBlockingComm = True
+            self.__Engine._VisItControlStepping = True
+            self.__Engine._UpdateVisItGUI = True
+            self.__Engine.StepSimulation()
+            self.Update()
+
+        elif qcmd == 'run':
+            pStatus('run')
+            self.__Engine._VisItBlockingComm = False
+            self.__Engine._VisItControlStepping = False
+            self.__Engine._UpdateVisItGUI = True
+
+        elif qcmd == 'continue':
+            pStatus('continue')
+            self.__Engine._VisItBlockingComm = False
+            self.__Engine._VisItControlStepping = False
+            self.__Engine._UpdateVisItGUI = False
+
+        else:
+            pError('Unrecgnozied command %s'%(qcmd))
+
+        return
+
+
+##############################################################################
+class PromptBehavior(object):
+    """ Implements command prompt behavior """
+    #-------------------------------------------------------------------------
+    def __init__(self, engine):
+        """ """
+        self.__Engine = engine
+        return
+
+    #-------------------------------------------------------------------------
+    def Initialize(self):
+        """
+        Initialize the object for monitor mode
+        """
+        import readline
+        self.__Engine.Disconnect()
+        self.__Engine._UpdateVisItGUI = False
+        self.__Engine._VisItControlStepping = False
+        self.__Engine._VisItBlockingComm = False
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
+        return
+
+    #-------------------------------------------------------------------------
+    def Connect(self):
+        """
+        Respond to connect in monitor mode
+        """
+        self.__Engine._UpdateVisItGUI = True
+        self.__Engine._VisItControlStepping = True
+        self.__Engine._VisItBlockingComm = True
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
+        return
+
+    #-------------------------------------------------------------------------
+    def Update(self):
+        """
+        Respond to request for simulation step in monitor mode
+        """
+        cmd=''
+        if self.__Engine._CommRank == 0:
+            cmd = raw_input('> ')
+        cmd = parallel.broadcast(cmd, root=0)
+        self.__Engine.ProcessCommand(cmd)
+        return
+
+    #-------------------------------------------------------------------------
+    def Process(self, qcmd):
+        """
+        process prompt control commands.
+
+        step      : take one simulation step and wait for more commands
+        end       : shut everything down
+        """
+
+        if (qcmd == 'end'):
+            self.__Engine.RequestShutdown()
+
+        elif qcmd == 'step':
+            pStatus('WarpVisItEngine step')
+            self.__Engine._VisItBlockingComm = True
+            self.__Engine._VisItControlStepping = True
+            self.__Engine._UpdateVisItGUI = True
+            self.__Engine.StepSimulation()
+            self.Update()
+
+        else:
+            print eval(qcmd,globals())
+
+        return
+
+##############################################################################
+class BatchBehavior(object):
+    """ Implements batch mode behvaior """
+    #-------------------------------------------------------------------------
+    def __init__(self, engine):
+        """ """
+        self.__Engine = engine
+        return
+
+    #-------------------------------------------------------------------------
+    def Initialize(self):
+        """
+        Initialize the object for batch mode
+        """
+        self.__Engine.Disconnect()
+        self.__Engine._UpdateVisItGUI = False
+        self.__Engine._VisItControlStepping = False
+        self.__Engine._VisItBlockingComm = True
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
+        return
+
+    #-------------------------------------------------------------------------
+    def Connect(self):
+        """
+        Respond to connect in batch mode
+        """
+        self.__Engine._UpdateVisItGUI = False
+        self.__Engine._VisItControlStepping = False
+        self.__Engine._VisItBlockingComm = True
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
+        self.__Engine.ProbeMemory(True)
+        return
+
+    #-------------------------------------------------------------------------
+    def Update(self):
+        """
+        Respond to request for simulation step in batch mode
+        """
+        if not self.__Engine.GetSynchronous():
+            # not already rendering
+            # render plots for this sim time step
+            if self.__Engine._Connected:
+                self.__Engine.PushRenderScripts()
+
+            # not already rendering
+            # check if the sim is finished
+            if self.__Engine._Simulation.Continue():
+                # sim is not finished
+                # send command to take a step
+                self.__Engine.ProcessCommand('adv')
+
+            else:
+                # sim is finished
+                # send command to end the simulation
+                self.__Engine.ProcessCommand('end')
+        return
+
+    #-------------------------------------------------------------------------
+    def Process(self, qcmd):
+        """
+        process batch control commands.
+
+        adv : take a step and intiate the next step
+        end : shut everything down
+        """
+        if qcmd == 'adv':
+            self.__Engine.StepSimulation()
+            self.__Engine.ProbeMemory()
+            self.Update()
+
+        elif (qcmd == 'end'):
+            self.__Engine.RequestShutdown()
+
+        else:
+            pError('Unrecgnozied command %s'%(qcmd))
+        return
+
+##############################################################################
+class MonitorBehavior(object):
+    """ Implements monitor behavior """
+    #-------------------------------------------------------------------------
+    def __init__(self, engine):
+        """ """
+        self.__Engine = engine
+        return
+
+    #-------------------------------------------------------------------------
+    def Initialize(self):
+        """
+        Initialize the object for monitor mode
+        """
+        self.__Engine.Disconnect()
+        self.__Engine._UpdateVisItGUI = False
+        self.__Engine._VisItControlStepping = False
+        self.__Engine._VisItBlockingComm = False
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
+        return
+
+    #-------------------------------------------------------------------------
+    def Connect(self):
+        """
+        Respond to connect in monitor mode
+        """
+        self.__Engine._UpdateVisItGUI = True
+        self.__Engine._VisItControlStepping = True
+        self.__Engine._VisItBlockingComm = True
+        self.__Engine._Synchronous = 0
+        self.__Engine._CommandQueue = []
+        return
+
+    #-------------------------------------------------------------------------
+    def Update(self):
+        """
+        Respond to request for simulation step in monitor mode
+        """
+        # interactive update
+        if self.__Engine._Connected:
+            # render plot for this sim time step
+            if self.__Engine._UpdateVisItGUI:
+                # trigger render of plot defined in the GUI
+                simV2.VisItUpdatePlots()
+
+        # advance the simulation if auto stepping
+        if not self.__Engine._VisItControlStepping:
+
+            # not already rendering
+            # check if the sim is finished
+            if self.__Engine._Simulation.Continue():
+                # sim is not finished
+                # take a step
+                self.__Engine.StepSimulation()
+                self.__Engine.ProbeMemory()
+            else:
+                # sim is finished
+                # send command to end the simulation
+                self.__Engine.RequestShutdown()
+
+        return
+
+    #-------------------------------------------------------------------------
+    def Process(self, qcmd):
+        """
+        process monitor control commands.
+
+        adv       : take a step and intiate the next step
+        step      : take one simulation step and wait for more commands
+        run       : make sequential steps and poll for commands
+        continue  : like run but do not update plots
+        pause     : finish the current step and wait for more commands
+        end       : shut everything down
+        endSyn    : internal use only, for synchronziation between sim and vis
+
+        """
+        if qcmd == 'pause':
+            pStatus('WarpVisItEngine pause')
+            self.__Engine._VisItBlockingComm = True
+            self.__Engine._VisItControlStepping = True
+            self.__Engine._UpdateVisItGUI = True
+            self.Update()
+
+        elif qcmd == 'step':
+            pStatus('WarpVisItEngine step')
+            self.__Engine._VisItBlockingComm = True
+            self.__Engine._VisItControlStepping = True
+            self.__Engine._UpdateVisItGUI = True
+            self.__Engine.StepSimulation()
+            self.Update()
+
+        elif qcmd == 'run':
+            pStatus('WarpVisItEngine run')
+            self.__Engine._VisItBlockingComm = False
+            self.__Engine._VisItControlStepping = False
+            self.__Engine._UpdateVisItGUI = True
+
+        elif qcmd == 'continue':
+            pStatus('WarpVisItEngine continue')
+            self.__Engine._VisItBlockingComm = False
+            self.__Engine._VisItControlStepping = False
+            self.__Engine._UpdateVisItGUI = False
+
+        elif qcmd == 'disconnect':
+            pStatus('WarpVisItEngine disconnect')
+            self.__Engine._VisItBlockingComm = False
+            self.__Engine._VisItControlStepping = False
+            self.__Engine._UpdateVisItGUI = False
+            self.__Engine.Disconnect()
+
+        else:
+            pError('Unrecgnozied command %s'%(qcmd))
         return
 
 
 
-
-# TODO these should move into the engine class
 #-----------------------------------------------------------------------------
 def broadcastInt(val, sender=0) :
     """Integer broadcast callback for libsim"""
