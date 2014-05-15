@@ -6,6 +6,7 @@ import WarpVisItSimV2Db
 from WarpVisItUtil import pError, pDebug, pStatus, VisItEnv, getEnvVar
 import traceback
 import parallel
+#import gc
 
 
 #-----------------------------------------------------------------------------
@@ -70,15 +71,6 @@ class WarpVisItEngine:
             self._Behavior = PromptBehavior(self)
         else:
             self._Behavior = BatchBehavior(self)
-
-        # initialize libsim
-        simV2.VisItSetDirectory(self._Env.GetRoot())
-        simV2.VisItSetupEnvironment()
-        simV2.VisItSetParallelRank(self._CommRank)
-        simV2.VisItSetParallel(self._CommSize > 1)
-        simV2.VisItSetBroadcastIntFunction(broadcastInt)
-        simV2.VisItSetBroadcastStringFunction(broadcastString)
-
         return
 
 
@@ -167,7 +159,14 @@ class WarpVisItEngine:
         """
         if __debug__: pDebug('WarpVisItEngine::Initialize')
 
+
+        # initialize libsim
+        simV2.VisItSetBroadcastIntFunction(broadcastInt)
+        simV2.VisItSetBroadcastStringFunction(broadcastString)
+        simV2.VisItSetParallelRank(self._CommRank)
+        simV2.VisItSetParallel(self._CommSize > 1)
         simV2.VisItSetDirectory(self._Env.GetRoot())
+        simV2.VisItSetupEnvironment()
 
         if self._TraceFile:
             simV2.VisItOpenTraceFile('%d.trace'%(self._CommRank))
@@ -193,6 +192,8 @@ class WarpVisItEngine:
         """
         if self._TraceFile:
             simV2.VisItCloseTraceFile()
+
+        simV2.VisItFinalize()
 
         # rm this file as if its left around
         # it will cause next cli to fail
@@ -244,6 +245,8 @@ class WarpVisItEngine:
                 # middle of processing its own commands.
                 if __debug__: pDebug('update')
                 self._Behavior.Update()
+                # TODO -- is it useful to force gc??
+                #gc.collect()
 
             # internal connection
             elif doConnect(event):
@@ -291,7 +294,7 @@ class WarpVisItEngine:
         """
         Install database callbacks in libsim
         """
-        if __debug__: pDebug('WarpVisItEngine::InitializeLibsim')
+        if __debug__: pDebug('WarpVisItEngine::ConnectLibsim')
         simV2.VisItSetGetMetaData(WarpVisItSimV2Db.getMetaData, self)
         simV2.VisItSetGetMesh(WarpVisItSimV2Db.getMesh, self)
         simV2.VisItSetGetVariable(WarpVisItSimV2Db.getVar, self)
@@ -299,7 +302,22 @@ class WarpVisItEngine:
         simV2.VisItSetCommandCallback(commandCallback, self)
         simV2.VisItSetSlaveProcessCallback(slaveProcessCallback)
         self._Connected = True
-        self._VisItBlockingComm = True
+        self._VisItBlockingComm = True # TODO -- isn't this part of behaviors now??
+        return
+
+    #------------------------------------------------------------------------
+    def DisconnectLibsim(self):
+        """
+        Install database callbacks in libsim
+        """
+        if __debug__: pDebug('WarpVisItEngine::DisconnectLibsim')
+        # handled by libsim internally now
+        #simV2.VisItSetGetMetaData(None, None)
+        #simV2.VisItSetGetMesh(None, None)
+        #simV2.VisItSetGetVariable(None, None)
+        #simV2.VisItSetGetDomainList(None, None)
+        #simV2.VisItSetCommandCallback(None, None)
+        #simV2.VisItSetSlaveProcessCallback(None)
         return
 
     #-------------------------------------------------------------------------
@@ -408,6 +426,7 @@ class WarpVisItEngine:
         self._Simulation.Advance()
         simV2.VisItTimeStepChanged()
         self._StepCount += 1
+
         return True
 
     #-------------------------------------------------------------------------
@@ -428,6 +447,7 @@ class WarpVisItEngine:
         Handle VisIt disconnect
         """
         if self._Connected:
+            self.DisconnectLibsim()
             simV2.VisItDisconnect()
             self._Connected = False
         return
@@ -527,7 +547,7 @@ class InteractBehavior(object):
             self.__Engine._UpdateVisItGUI = False
 
         else:
-            pError('Unrecgnozied command %s'%(qcmd))
+            pError('Unrecognized command %s'%(qcmd))
 
         return
 
@@ -626,7 +646,7 @@ class MonitorBehavior(object):
             self.__Engine._VisItControlStepping = False
             self.__Engine._UpdateVisItGUI = False
 
-        elif qcmd == 'disconnect':
+        elif qcmd == 'end' or qcmd == 'disconnect':
             pStatus('WarpVisItEngine disconnect')
             self.__Engine._VisItBlockingComm = False
             self.__Engine._VisItControlStepping = False
@@ -634,7 +654,7 @@ class MonitorBehavior(object):
             self.__Engine.Disconnect()
 
         else:
-            pError('Unrecgnozied command %s'%(qcmd))
+            pError('Unrecognized command %s'%(qcmd))
         return
 
 ##############################################################################
@@ -852,7 +872,7 @@ class BatchBehavior(object):
             self.__Engine.RequestShutdown()
 
         else:
-            pError('Unrecgnozied command %s'%(qcmd))
+            pError('Unrecognized command %s'%(qcmd))
         return
 
 
