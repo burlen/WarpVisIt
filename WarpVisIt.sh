@@ -116,12 +116,23 @@ then
     elif [[ $MEMCHECK -eq 1 ]]
     then
         echo "starting with memcheck..."
-        valgrind --tool=memcheck --leak-check=full --show-reachable=yes --log-file=memcheck.log python ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
+        valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=50 --log-file=memcheck.log python ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
 
     else
         python ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
     fi
 else
     echo "starting $NUM_PROCS way parallel run..."
-    $MPI_EXEC -n $NUM_PROCS pyMPI ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
+    if [[ $MASSIF -eq 1 ]]
+    then
+        $MPI_EXEC -n $NUM_PROCS pyMPI ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
+        echo "starting with massif..."
+        $MPI_EXEC -n $NUM_PROCS pyMPI valgrind --tool=massif python ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
+    elif [[ $MEMCHECK -eq 1 ]]
+    then
+        echo "starting with memcheck..."
+        $MPI_EXEC -n $NUM_PROCS valgrind --tool=memcheck --leak-check=full --show-reachable=yes --num-callers=50 --log-file=memcheck-%p.log --trace-children=no pyMPI ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
+    else
+        $MPI_EXEC -n $NUM_PROCS pyMPI ${WARPVISIT_INSTALL}/WarpVisItEngineMain.py "${ARGS[@]}"
+    fi
 fi
