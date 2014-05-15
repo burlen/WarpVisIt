@@ -224,7 +224,7 @@ def getMesh(domain, name, userData):
         zvd = passGridData(coords[2])
 
         if (not (valid(xvd) and valid(yvd) and valid(zvd))):
-            pError('failed to pass particle locations')
+            pError('failed to pass mesh coords')
             return None
 
         mesh = simV2.VisIt_RectilinearMesh_alloc()
