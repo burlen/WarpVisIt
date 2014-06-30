@@ -30,11 +30,13 @@ class LPATwoColorSimulation(WarpVisItSimulation):
     """
     def __init__(self,args=[]):
         global bigRun
+        global runDim
 
         # call base class constructor
         WarpVisItSimulation.__init__(self,args)
 
         self._BigRun = False
+        self._RunDim = 2
 
         # for two phases of vis output frequency
         # adopt superclass settings as the default
@@ -46,21 +48,28 @@ class LPATwoColorSimulation(WarpVisItSimulation):
         # parse command line args
         ap = argparse.ArgumentParser(usage=argparse.SUPPRESS,prog='LPATwoColorSimulation',add_help=False)
         ap.add_argument('--big-run',default=self._BigRun,action='store_true')
+        ap.add_argument('--run-dim',type=int,default=self._RunDim)
         ap.add_argument('--init-step',type=int,default=self._InitStep)
         ap.add_argument('--init-stop',type=int,default=self._InitStop)
         ap.add_argument('--init-plot',type=int,default=None)
         opts = vars(ap.parse_known_args(args)[0])
         opts = vars(ap.parse_known_args(args)[0])
         self._BigRun = opts['big_run']
+        self._RunDim = opts['run_dim']
         self._InitStep = opts['init_step']
         self._InitStop = opts['init_stop']
         self._InitPlot = self._InitStep if opts['init_plot'] is None else opts['init_plot']
 
         # set global that controls scientists init script
         bigRun = self._BigRun
+        runDim = self._RunDim
 
         # setup vis scripts
-        self.AddRenderScript('4Views','render-four-views.py')
+        if self._RunDim == 2:
+            self.AddRenderScript('4Views','render-four-views.py')
+        else:
+            # TODO
+            print "TODO: write 3d vis scripts"
         return
 
     #------------------------------------------------------------------------
@@ -175,6 +184,7 @@ Eamp1=None
 laser_duration1=None
 laser_risetime1=None
 bigRun = None
+runDim=None
 
 def plasma_trans_profile(r):
     global max_diff_density, max_radius, max_parab_radius, norm_diff_density
@@ -343,6 +353,7 @@ def add_external_laser():
 def initlpa():
     global zstart0,zpos,xp0,yp0,zp0,wp0,l_moving_window, diagnosticsScript, laser_total_length,Eamp,laser_duration,laser_risetime, laser_waist, laser_amplitude,laser_phase,laser_profile,k0,w0, vg, max_diff_density, max_radius, max_parab_radius, norm_diff_density, betafrm, Lplasma, zstart_plasma, zstart_ions, length_pramp, length_pramp_exit, length_iramp, Lions, length_iramp_exit, dens_ions, dens0, ions, rp0, zstart_laser, em, laser_radius, laser_radius1, live_plot_freq, elec , prot, ions, zstart_laser1, zstart_ions_lab, Tstart_laser1, laser_amplitude1, laser_phase1, laser_profile1, k1, w1, ZR1, laser_total_length1, Eamp1,laser_duration1, laser_risetime1
     global bigRun
+    global runDim
 
     # --- flags turning off unnecessary diagnostics (ignore for now)
     warp.top.ifzmmnt = 0
@@ -363,9 +374,10 @@ def initlpa():
     #-------------------------------------------------------------------------------
     # main parameters
     #-------------------------------------------------------------------------------
-    #dim = "3d"                 # 3D calculation
-    dim = "2d"                 # 2D calculation
-    #dim = "1d"                 # 1D calculation
+    if runDim == 3:
+      dim = "3d"
+    else:
+      dim = "2d"
     dpi=100                     # graphics resolution
     l_test             = 0      # Will open output window on screen
                                 # and stop before entering main loop.
@@ -746,6 +758,14 @@ def initlpa():
 
     #  ions.sm*=1.e20  # to give virtually infinite mass to ions
     warp.top.wpid = warp.nextpid() # creates data space for variable weights (needed for plasma ramps)
+    if runDim == 3:
+      warp.top.xbirthpid=warp.nextpid()
+      warp.top.ybirthpid=warp.nextpid()
+      warp.top.zbirthpid=warp.nextpid()
+      warp.top.uxbirthpid=warp.nextpid()
+      warp.top.uybirthpid=warp.nextpid()
+      warp.top.uzbirthpid=warp.nextpid()
+
     warp.top.depos_order[...] = warp.top.depos_order[0,0] # sets deposition order of all species = those of species 0
     warp.top.efetch[...] = warp.top.efetch[0] # same for field gathering
     if dim in ["1d","2d"]:
@@ -975,6 +995,8 @@ def initlpa():
     #-------------------------------------------------------------------------------
     print 'register solver'
     warp.registersolver(em)
+    if runDim == 3:
+      em.finalize()
 
     #-------------------------------------------------------------------------------
     # sets moving window velocity
