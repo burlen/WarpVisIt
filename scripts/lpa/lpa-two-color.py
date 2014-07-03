@@ -405,16 +405,16 @@ def initlpa():
     else:
         dtcoef         = 1.0
 
-    warp.top.depos_order    = 3      # particles deposition order (1=linear, 2=quadratic, 3=cubic)
-    warp.top.efetch         = 4      # field gather type (1=from nodes "momentum conserving"; 4=from Yee mesh "energy conserving")
+    warp.top.depos_order = 3    # particles deposition order (1=linear, 2=quadratic, 3=cubic)
+    warp.top.efetch    = 4      # field gather type (1=from nodes "momentum conserving"; 4=from Yee mesh "energy conserving")
     nzstations         = 50     # number of beam diag z-stations
     l_pselect          = 0      # on/off selection of particles (i.e. remove halo) for diagnostics
-    warp.top.runid          = "lpa_basic"                         # run name
-    warp.top.pline1         = "basic lpa"                         # comment line on plots
-    warp.top.runmaker       = "J.-L. Vay,"                        # run makers
-    warp.top.lrelativ       = True                                # on/off relativity (for particles push)
-    warp.top.pgroup.lebcancel_pusher=True                         # flag for particle pusher (0=Boris pusher; 1=Vay PoP 08 pusher)
-    l_verbose          = 0                                   # verbosity level (0=off; 1=on)
+    warp.top.runid     = "lpa_basic"      # run name
+    warp.top.pline1    = "basic lpa"      # comment line on plots
+    warp.top.runmaker  = "J.-L. Vay,"     # run makers
+    warp.top.lrelativ  = True             # on/off relativity (for particles push)
+    warp.top.pgroup.lebcancel_pusher=True # flag for particle pusher (0=Boris pusher; 1=Vay PoP 08 pusher)
+    l_verbose          = 0                # verbosity level (0=off; 1=on)
 
     #-------------------------------------------------------------------------------
     # diagnostics parameters + a few other settings
@@ -523,9 +523,9 @@ def initlpa():
     laser_risetime_lab1 = 3.*laser_duration_lab1
     laser_dura_fwhm_lab1= 1.1774*laser_duration_lab1
     laser_polangle1     = 0                    # polarization (0=aligned with x; math.pi/2=aligned with y)
-    a1                 =0.135                    # normalized potential vector (amplitude)
-    k1lab              = 2.*math.pi/lambda_laser_lab1
-    w1lab              = k1lab*warp.clight
+    a1                  =0.135                    # normalized potential vector (amplitude)
+    k1lab               = 2.*math.pi/lambda_laser_lab1
+    w1lab               = k1lab*warp.clight
     ZR1                 = 0.5*k1lab*(laser_waist1**2)   # Rayleigh length
     #zstart_laser_lab1  = (7.6-28.)*lambda_laser_lab
     # --- in boosted frame
@@ -535,8 +535,8 @@ def initlpa():
     laser_risetime1     = 3.*laser_duration1
     laser_dura_fwhm1    = 1.1774*laser_duration1
     #zstart_laser1  = zstart_laser_lab1/gammafrm
-    k1                 = 2.*math.pi/lambda_laser1
-    w1                 = k1*warp.clight
+    k1                  = 2.*math.pi/lambda_laser1
+    w1                  = k1*warp.clight
     Eamp1               = a1*w1*warp.emass*warp.clight/warp.echarge
     Bamp1               = Eamp1/warp.clight
     if l_laser==0:
@@ -609,8 +609,12 @@ def initlpa():
         nx = 1200
         nzplambda = 60
     else:
-        nx = 1200/6
-        nzplambda = 60/6
+        if runDim==3:
+            nx = 1200/12
+            nzplambda = 60/12
+        else:
+            nx = 1200/6
+            nzplambda = 60/6
 
 
     #-------------------------------------------------------------------------------
@@ -704,11 +708,11 @@ def initlpa():
     channel_region=3.0*laser_radius
     CHANNELFAC = 0.4 # factor by which density rise is less than matched density (to compensate self guide)
     matchspot  = laser_radius*(1/CHANNELFAC)**0.25 # channel
-    max_parab_radius   = 0.8*channel_region
+    max_parab_radius  = 0.8*channel_region
     max_radius        = 0.96*channel_region
     diff_density      = gammafrm*1.13e14/(matchspot**4)  #formula for the channel density without the radius squared term
     if dim=="1d":diff_density=0.
-    norm_diff_density  = diff_density/dens0        #the normalized channel density without the radius squared term
+    norm_diff_density = diff_density/dens0        #the normalized channel density without the radius squared term
     max_diff_density  = norm_diff_density*(max_parab_radius**2) #the maximum normalized channel density
 
     #-------------------------------------------------------------------------------
@@ -723,10 +727,6 @@ def initlpa():
     dump_intervals = tmax/20
     beamdump_intervals = tmax/10
     plot_intervals = tmax/10
-
-    #-------------------------------------------------------------------------------
-    # set graphics
-    #-------------------------------------------------------------------------------
 
     #-------------------------------------------------------------------------------
     # set particles
@@ -917,10 +917,6 @@ def initlpa():
     if l_restart:
         restore(dump_file)
 
-    # --- load diagnostics
-    #execfile('lpa_basic_diags.py')
-    #execfile( diagnosticsScript )
-
     #-------------------------------------------------------------------------------
     # intializes e- beam
     #-------------------------------------------------------------------------------
@@ -997,6 +993,7 @@ def initlpa():
     warp.registersolver(em)
     if runDim == 3:
       em.finalize()
+    print warp.getregisteredsolver().dict_of_grids
 
     #-------------------------------------------------------------------------------
     # sets moving window velocity
